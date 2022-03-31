@@ -2,5 +2,5 @@ rich==12.0.1
 pyyaml==6.0
 networkx==2.7.1
 joblib==1.1.0
-playwright==v1.18.1
+playwright==v1.20.1
 loguru==0.5.3

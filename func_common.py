@@ -26,72 +26,63 @@ def refresh_direct(page: Page):
 def login(page: Page, login_conf: dict):
     DynLog.record_log("正在自动登录")
     page.fill("input[placeholder=\"请输入用户名\"]", login_conf.get("username"))
+    page.wait_for_timeout(timeout=300)
     page.fill("input[placeholder=\"请输入密码\"]", login_conf.get("password"))
+    page.wait_for_timeout(timeout=300)
     page.check("input[type=\"checkbox\"]")
+    page.wait_for_timeout(timeout=300)
     while True:
         try:
             with page.expect_navigation(url="https://game.nimingxx.com/home", timeout=5000):
                 page.click("button:has-text(\"立即登陆\")")
-        except Exception:
-            DynLog.record_log("连接失败1", error=True)
-            page.wait_for_timeout(timeout=10000)
-            continue
-        finally:
-            page.wait_for_timeout(timeout=600)
-
-        try:
             page.wait_for_selector("text=日志记录", timeout=2000)
-            # "div[role=\"tab\"]:has-text(\"灵宠\")"
             break
         except Exception:
-            DynLog.record_log("连接失败2", error=True)
+            DynLog.record_log("连接失败", error=True)
             page.wait_for_timeout(timeout=10000)
             continue
-        finally:
-            page.wait_for_timeout(timeout=600)
     DynLog.record_log("登录成功")
 
     # 初始化队伍和战斗
     DynLog.record_log("正在初始化界面")
-    page.click("text=储物戒")
-    page.wait_for_timeout(timeout=300)
-    page.click("text=地图场景")
-    page.wait_for_timeout(timeout=300)
-    page.click("text=活动")
-    page.wait_for_timeout(timeout=300)
-    # 领取奖励
-    if (button1 := page.locator("button:has-text(\"签到\")")).count() == 1:
-        button1.click()
-    page.wait_for_timeout(timeout=300)
-    if (button2 := page.locator("button:has-text(\"领取维护补偿\")")).count() == 1:
-        button2.click()
-    page.click("text=地图场景")
-    page.wait_for_timeout(timeout=300)
+    for tab in ("储物戒", "地图场景", "活动", "储物戒", "地图场景"):
+        page.click(f"text={tab}")
+        page.wait_for_timeout(timeout=300)
+        if tab == "活动":
+            # 领取奖励
+            page.wait_for_selector("button:has-text(\"领取维护补偿\")", timeout=2000)
+            if page.locator("button:has-text(\"签到\")").count() == 1:
+                page.locator("button:has-text(\"签到\")").click()
+                page.wait_for_timeout(timeout=300)
+            page.locator("button:has-text(\"领取维护补偿\")").click()
 
     DynLog.record_log("正在关闭耗费资源的配置")
     # 关闭日志记录
     if (off_log_switch := page.locator("div[role=\"switch\"]")).get_attribute('aria-checked') != 'true':
         off_log_switch.locator("span").click()
+        page.wait_for_timeout(timeout=300)
 
     page.locator("svg[data-icon=\"setting\"]").first.click()
     # 关闭自动跳转战斗
     if page.locator("label[class=\"el-checkbox is-checked\"]").count() > 0:
         page.click("text=自动跳转战斗日志")
+        page.wait_for_timeout(timeout=300)
 
     # 关闭战斗动画
     if (fight_animation := page.locator("text=自动跳转战斗日志 是否显示战斗动画效果 清空聊天框记录 >> div[role=\"switch\"]")).get_attribute(
             'aria-checked') == 'true':
         fight_animation.locator("span").click()
+        page.wait_for_timeout(timeout=300)
 
     page.click("button:has-text(\"保 存\")")
+    page.wait_for_timeout(timeout=300)
 
 
-def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: object):
+def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: GlobalVars):
     start_city = "丹城"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
-    times = 10
-    while times > 0:
+    for i in range(10):
         if page.url.endswith('login'):
             login(page, user_config.get("login"))
         DynLog.record_log("开始做药灵任务")
@@ -101,12 +92,16 @@ def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: object)
         move_to_map(page, start_city)
 
         DynLog.record_log("接取药灵任务")
-        page.wait_for_timeout(timeout=2000)
+        page.wait_for_selector("button:has-text(\"旭日药师\")", timeout=3000)
         while (person := page.locator("button:has-text(\"旭日药师\")")).count() == 1:
             person.click()
-            page.wait_for_timeout(timeout=1000)
+            page.wait_for_timeout(timeout=500)
             if page.locator("div[class=\"ant-drawer ant-drawer-bottom ant-drawer-open\"]").count() == 1:
                 page.locator("text=接取[采药]任务").click()
+                page.wait_for_timeout(timeout=500)
+                if page.locator("text=领取上限").count() == 1:
+                    DynLog.record_log("今日任务已做完")
+                    return
                 page.wait_for_timeout(timeout=1000)
             else:
                 DynLog.record_log("任务对话框没弹出来", error=True)
@@ -121,36 +116,45 @@ def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: object)
             continue
         mission = page.locator("text=-寻找药灵")
         mission.hover()
-        page.wait_for_timeout(timeout=1000)
+        page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
         mission_detail = page.locator("span[class=\"task-brief\"]:has-text(\"地区击败\")")
         pattern_mission = re.search(".+【(.+)】.*地区击败(.+)", mission_detail.inner_text())
-        mission_city = pattern_mission.group(1).strip()
         mission_monster = pattern_mission.group(2).strip()
 
-        # move_to_map(page, mission_city)
         mission.click()
         DynLog.record_log("飞过去")
-        page.wait_for_timeout(timeout=2000)
+        page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         # 战斗
         while True:
-            # page.locator(f'a div img:right-of(:text("{mission_monster}"))').first.click()
-            page.locator(f'img[title=\"挑战\"]:right-of(:text("{mission_monster}"))').first.click()
+            for tab in ("战斗日志", "地图场景"):
+                page.click(f"text={tab}")
+                page.wait_for_timeout(timeout=1000)
+            monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
+            monster_id = monster_list.index(mission_monster)
+            page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
 
             # 自动战斗
             if not auto_fight:
                 auto_fight_on(page, user_config.get("fight"), cycle=False)
                 auto_fight = True
 
-            page.wait_for_timeout(timeout=8000)
+            while True:
+                for tab in ("战斗日志", "地图场景"):
+                    page.click(f"text={tab}")
+                    page.wait_for_timeout(timeout=1000)
+                if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
+                    break
+                else:
+                    continue
+
             update_display_info(page, info_deque, user_idx, person_vars)
             if mission.count() == 0:
-                DynLog.record_log("完成一次药灵任务")
-                times -= 1
+                DynLog.record_log(f"完成今日第{i + 1}次药灵任务")
                 break
     DynLog.record_log("任务完成，请手动退出")
 
 
-def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: object):
+def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: GlobalVars):
     start_city = "林中栈道"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
@@ -222,12 +226,11 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: object
     DynLog.record_log("任务完成，请手动退出")
 
 
-def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: object):
+def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: GlobalVars):
     start_city = "阳城"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
-    times = 10
-    while times > 0:
+    for i in range(10):
         if page.url.endswith('login'):
             login(page, user_config.get("login"))
         DynLog.record_log("开始做寻宝任务")
@@ -237,12 +240,16 @@ def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: object):
         move_to_map(page, start_city)
 
         DynLog.record_log("接取寻宝任务")
-        page.wait_for_timeout(timeout=2000)
+        page.wait_for_selector("button:has-text(\"盗极生\")", timeout=3000)
         while (person := page.locator("button:has-text(\"盗极生\")")).count() == 1:
             person.click()
-            page.wait_for_timeout(timeout=1000)
+            page.wait_for_timeout(timeout=500)
             if page.locator("div[class=\"ant-drawer ant-drawer-bottom ant-drawer-open\"]").count() == 1:
                 page.locator("text=接取[寻宝图]任务").click()
+                page.wait_for_timeout(timeout=500)
+                if page.locator("text=领取上限").count() == 1:
+                    DynLog.record_log("今日任务已做完")
+                    return
                 page.wait_for_timeout(timeout=1000)
             else:
                 DynLog.record_log("任务对话框没弹出来", error=True)
@@ -257,35 +264,44 @@ def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: object):
             continue
         mission = page.locator("text=-寻宝")
         mission.hover()
-        page.wait_for_timeout(timeout=1000)
+        page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
         mission_detail = page.locator("span[class=\"task-brief\"]:has-text(\"地区击败\")")
         pattern_mission = re.search(r".+【(.+)】.*地区击败(.+)", mission_detail.inner_text())
-        # mission_city = pattern_mission.group(1).strip()
         mission_monster = pattern_mission.group(2).strip()
 
-        # move_to_map(page, mission_city)
         mission.click()
         DynLog.record_log("飞过去")
-        page.wait_for_timeout(timeout=2000)
+        page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         # 战斗
         while True:
-            # page.locator(f'a div img:right-of(:text("{mission_monster}"))').first.click()
-            page.locator(f'img[title=\"挑战\"]:right-of(:text("{mission_monster}"))').first.click()
+            for tab in ("战斗日志", "地图场景"):
+                page.click(f"text={tab}")
+                page.wait_for_timeout(timeout=1000)
+            monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
+            monster_id = monster_list.index(mission_monster)
+            page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
 
             # 自动战斗
             if not auto_fight:
                 auto_fight_on(page, user_config.get("fight"), cycle=False)
                 auto_fight = True
 
-            page.wait_for_timeout(timeout=8000)
+            while True:
+                for tab in ("战斗日志", "地图场景"):
+                    page.click(f"text={tab}")
+                    page.wait_for_timeout(timeout=1000)
+                if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
+                    break
+                else:
+                    continue
+
             update_display_info(page, info_deque, user_idx, person_vars)
             mission.hover()
-            page.wait_for_timeout(timeout=1000)
+            page.wait_for_selector("a[class=\"tb\"]:has-text(\"完成\")", timeout=2000)
             page.locator("a[class=\"tb\"]:has-text(\"完成\")").click()
-            page.wait_for_timeout(timeout=1000)
+            page.wait_for_timeout(timeout=500)
             if mission.count() == 0:
-                DynLog.record_log("完成一次寻宝任务")
-                times -= 1
+                DynLog.record_log(f"完成今日第{i + 1}次寻宝任务")
                 break
     DynLog.record_log("任务完成，请手动退出")
 

@@ -133,7 +133,7 @@ def move_to_map(page: Page, target_map: str) -> None:
     g = nx.read_gpickle('map_luofan.pkl')
     # g = nx.read_gml('map_luofan.gml')
     curr_map = page.locator("text=当前地图").inner_text()
-    curr_map = curr_map.split(":")[1]
+    curr_map = curr_map.split(":")[1].strip()
     map_step = 20
     if curr_map != target_map:
         DynLog.record_log(f"正在寻路去往{target_map}")
@@ -145,6 +145,7 @@ def move_to_map(page: Page, target_map: str) -> None:
                 x = int(city_loc.get_attribute('x'))
                 y = int(city_loc.get_attribute('y'))
             else:
+                # 处理类似阳城和阳城驿站这种
                 city_loc_txt = city_loc.all_text_contents()
                 city_loc_txt = list(map(lambda z: z.strip(), city_loc_txt))
                 city_loc_idx = city_loc_txt.index(p)
@@ -155,29 +156,29 @@ def move_to_map(page: Page, target_map: str) -> None:
                 move_left = page.locator("div[class=\"move-d move-left\"]")
                 for _ in range(ceil(abs((x - x_min) / map_step))):
                     move_left.click()
-                    page.wait_for_timeout(timeout=500)
+                    page.wait_for_timeout(timeout=300)
 
             if x >= (x_max := 400):
                 move_right = page.locator("div[class=\"move-d move-right\"]")
                 for _ in range(ceil(abs((x - x_max) / map_step))):
                     move_right.click()
-                    page.wait_for_timeout(timeout=500)
+                    page.wait_for_timeout(timeout=300)
 
             if y <= (y_min := 60):
                 move_top = page.locator("div[class=\"move-d move-top\"]")
                 for _ in range(ceil(abs((y - y_min) / map_step))):
                     move_top.click()
-                    page.wait_for_timeout(timeout=500)
+                    page.wait_for_timeout(timeout=300)
 
             if y >= (y_max := 230):
                 move_bottom = page.locator("div[class=\"move-d move-bottom\"]")
                 for _ in range(ceil(abs((y - y_max) / map_step))):
                     move_bottom.click()
-                    page.wait_for_timeout(timeout=500)
+                    page.wait_for_timeout(timeout=300)
 
             svg_frame_text.locator(f"text={p}").nth(city_loc_idx).click()
             DynLog.record_log(f"路过{p}")
-            page.wait_for_timeout(timeout=2000)
+            page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=3000)
         DynLog.record_log("已到达指定地图")
 
 
@@ -246,16 +247,14 @@ def auto_fight_on(page: Page, fight_config: dict, cycle=True):
         else:
             DynLog.record_log("你还没学会配置的技能", error=True)
             exit(1)
-
+    page.wait_for_timeout(timeout=300)
     if cycle:
         page.click("text=循环挑战")
+        page.wait_for_timeout(timeout=300)
 
-    auto_fight_box = page.locator(f"text=请操作 自动 ↓技能↓ {skill_name} ↓目标↓ >> input[type=\"checkbox\"]")
-    while auto_fight_box.count() == 0:
-        page.wait_for_timeout(timeout=600)
-        continue
-    else:
-        auto_fight_box.check()
+    auto_fight_box = page.locator(f"text=自动 ↓技能↓ {skill_name} ↓目标↓ >> input[type=\"checkbox\"]")
+    auto_fight_box.check()
+    page.wait_for_timeout(timeout=300)
     page.click("text=地图场景")
     page.wait_for_timeout(timeout=300)
     DynLog.record_log("开启自动战斗成功")

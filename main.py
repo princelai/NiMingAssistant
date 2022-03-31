@@ -13,7 +13,7 @@ def dispatcher(browser, user_config, user_idx):
     page = context.new_page()
     with page.expect_navigation(url="https://game.nimingxx.com/login", timeout=8000):
         page.goto("https://game.nimingxx.com/login", timeout=8000)
-    page.wait_for_timeout(timeout=3000)
+    page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=5000)
 
     if user_config['mission']['name'] == "药灵":
         mission_yaoling(page, user_config, user_idx, GlobalVars())
