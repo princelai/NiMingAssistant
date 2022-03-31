@@ -33,12 +33,12 @@ class ProgramInfo:
         time1_str = f"{int(match_time1.group(1))}天{int(match_time1.group(2))}小时{int(match_time1.group(3))}分"
         info1 = Align.center(Text(time1_str, style="bold magenta", justify="center"))
         info2 = Text(
-            """Version:0.7.1\n继续进化中""",
+            """Version:0.7.5\n继续进化中""",
             justify="center",
         )
 
         info3 = Text(
-            """项目主页:https://github.com/xxxx""",
+            """项目主页:https://github.com/princelai/NiMingAssistant""",
             justify="center",
         )
         info_panel = Panel(
