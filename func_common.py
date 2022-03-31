@@ -150,6 +150,78 @@ def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: object)
     DynLog.record_log("任务完成，请手动退出")
 
 
+def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: object):
+    start_city = "林中栈道"
+    auto_fight = False
+    info_deque = defaultdict(partial(deque, maxlen=128))
+    times = 3
+    while times > 0:
+        if page.url.endswith('login'):
+            login(page, user_config.get("login"))
+        DynLog.record_log("开始做降妖任务")
+        update_display_info(page, info_deque, user_idx, person_vars)
+        page.click("text=地图场景")
+        page.wait_for_timeout(timeout=300)
+        move_to_map(page, start_city)
+
+        DynLog.record_log("接取降妖任务")
+        page.wait_for_timeout(timeout=2000)
+        # 组队
+        page.wait_for_timeout(timeout=1000)
+        while (person := page.locator("button:has-text(\"凌中天\")")).count() == 1:
+            person.click()
+            page.wait_for_timeout(timeout=1000)
+            if page.locator("div[class=\"ant-drawer ant-drawer-bottom ant-drawer-open\"]").count() == 1:
+                page.locator("text=接取[降妖]任务").click()
+                page.wait_for_timeout(timeout=1000)
+            else:
+                DynLog.record_log("任务对话框没弹出来", error=True)
+                continue
+            if page.locator("text=-降妖").count() == 1:
+                DynLog.record_log("接到任务")
+                break
+            else:
+                continue
+        else:
+            DynLog.record_log("未能正确初始化任务位置", error=True)
+            continue
+        # 任务刷新
+        mission = page.locator("text=-降妖")
+        mission.hover()
+        page.wait_for_timeout(timeout=1000)
+        mission_detail = page.locator("span[class=\"task-brief\"]:has-text(\"地区击败\")")
+        pattern_mission = re.search(r".+【(.+)】.*地区击败(.+)", mission_detail.inner_text())
+        # mission_city = pattern_mission.group(1).strip()
+        mission_monster = pattern_mission.group(2).strip()
+
+        mission.click()
+        DynLog.record_log("飞过去")
+        page.wait_for_timeout(timeout=2000)
+        # 战斗
+        while True:
+            # page.locator(f'a div img:right-of(:text("{mission_monster}"))').first.click()
+            page.locator(f'img[title=\"挑战\"]:right-of(:text("{mission_monster}"))').first.click()
+
+            # 自动战斗
+            if not auto_fight:
+                auto_fight_on(page, user_config.get("fight"), cycle=False)
+                auto_fight = True
+
+            page.wait_for_timeout(timeout=8000)
+            update_display_info(page, info_deque, user_idx, person_vars)
+
+            # 任务刷新
+            mission.hover()
+            page.wait_for_timeout(timeout=1000)
+            page.locator("a[class=\"tb\"]:has-text(\"完成\")").click()
+            page.wait_for_timeout(timeout=1000)
+            if mission.count() == 0:
+                DynLog.record_log("完成一次降妖任务")
+                times -= 1
+                break
+    DynLog.record_log("任务完成，请手动退出")
+
+
 def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: object):
     start_city = "阳城"
     auto_fight = False
@@ -225,6 +297,7 @@ def fight(page: Page, fight_config: dict, person_vars: GlobalVars):
     page.click("button:has-text(\"刷新列表\")")
 
     while True:
+        # TODO(kevin):增加一个fallback模式
         if fight_config.get("captain") is not None or not fight_config.get("alone"):
             page.wait_for_timeout(timeout=600)
             team_list = page.locator("[class=\"team-list-row el-row\"]")
