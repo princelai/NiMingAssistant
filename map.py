@@ -17,7 +17,7 @@ class CityMap:
     def move_to_map(cls, page: Page, target_map: str) -> None:
         curr_map = page.locator("text=当前地图").inner_text()
         curr_map = curr_map.split(":")[1].strip()
-        map_step = 20
+        map_step = 15
         if curr_map != target_map:
             DynLog.record_log(f"正在寻路去往{target_map}")
             walk_path = nx.shortest_path(cls.g, curr_map, target_map)[1:]
@@ -59,9 +59,10 @@ class CityMap:
                         move_bottom.click()
                         page.wait_for_timeout(timeout=300)
 
+                page.wait_for_timeout(timeout=1000)
                 svg_frame_text.locator(f"text={p}").nth(city_loc_idx).click()
                 DynLog.record_log(f"路过{p}")
-                page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=3000)
+                page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=10000)
             DynLog.record_log("已到达指定地图")
 
     @classmethod

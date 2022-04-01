@@ -157,14 +157,14 @@ def auto_fight_on(page: Page, fight_config: dict, cycle=True):
     page.wait_for_timeout(timeout=500)
     if fight_config.get("skill") is None:
         # last skill
-        page.wait_for_selector("div[class=\"skill-bar\"] > div > img", timeout=10000)
+        page.wait_for_selector("div[class=\"skill-bar\"] > div > img", timeout=15000)
         skill = page.locator("div[class=\"skill-bar\"] > div > img").last
         skill_name = skill.get_attribute("alt")
         skill.click()
     else:
         # point skill
         skill_name = fight_config.get("skill")
-        page.wait_for_selector(f"img[alt=\"{skill_name}\"]", timeout=10000)
+        page.wait_for_selector(f"img[alt=\"{skill_name}\"]", timeout=15000)
         skill = page.locator(f"img[alt=\"{skill_name}\"]")
         if skill.count() == 1:
             skill.click()

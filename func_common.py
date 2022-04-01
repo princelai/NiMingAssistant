@@ -177,10 +177,11 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVa
             page.click(f"text={tab}")
             page.wait_for_timeout(timeout=500)
 
-        page.click("text=需要密令")
-        page.wait_for_timeout(timeout=300)
-        page.click("button:has-text(\"创建队伍\")")
-        page.wait_for_selector("a:has-text(\"X\")", timeout=1000)
+        if page.locator("a:has-text(\"X\")").count() == 0:
+            page.click("text=需要密令")
+            page.wait_for_timeout(timeout=300)
+            page.click("button:has-text(\"创建队伍\")")
+            page.wait_for_selector("a:has-text(\"X\")", timeout=1000)
         while (person := page.locator("button:has-text(\"凌中天\")")).count() == 1:
             person.click()
             page.wait_for_timeout(timeout=500)
@@ -194,7 +195,8 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVa
             else:
                 DynLog.record_log("任务对话框没弹出来", error=True)
                 continue
-            # 任务刷新
+            page.locator("i[class=\"el-icon-refresh\"]").click()
+            page.wait_for_timeout(timeout=500)
             if page.locator("text=-降妖").count() == 1:
                 DynLog.record_log("接到任务")
                 break
@@ -213,10 +215,14 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVa
 
         mission.click()
         DynLog.record_log("飞过去")
+        # 这里应该是等待地图
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         for j in range(10):
             for p in CityMap.neighbor_city(mission_city):
                 CityMap.move_to_map(page, p)
+                for tab in ("战斗日志", "地图场景"):
+                    page.click(f"text={tab}")
+                    page.wait_for_timeout(timeout=1000)
                 monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
                 if mission_monster in monster_list:
                     mission_city = p
@@ -238,26 +244,26 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVa
                     auto_fight = True
 
                 # 等待战斗结束
-                while True:
-                    # 如何才能判断降妖任务完成？因为有可能打不过
-                    for tab in ("战斗日志", "地图场景"):
-                        page.click(f"text={tab}")
-                        page.wait_for_timeout(timeout=1000)
-                    if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
-                        break
+                # page.locator("text=当前第 1 轮").count()
+                try:
+                    if j < 9:
+                        page.wait_for_selector("text=快去附近找找看!", timeout=20000)
                     else:
-                        continue
+                        page.wait_for_selector("text=完成[降妖]", timeout=20000)
+                except Exception:
+                    DynLog.record_log("没打过")
+                    continue
 
                 update_display_info(page, info_deque, user_idx, person_vars)
+                for tab in ("战斗日志", "地图场景"):
+                    page.click(f"text={tab}")
+                    page.wait_for_timeout(timeout=500)
 
-                # 任务刷新
-                mission.hover()
-                page.wait_for_selector("a[class=\"tb\"]:has-text(\"完成\")", timeout=2000)
-                page.locator("a[class=\"tb\"]:has-text(\"完成\")").click()
+                page.locator("i[class=\"el-icon-refresh\"]").click()
                 page.wait_for_timeout(timeout=500)
-                if mission.count() == 0:
-                    DynLog.record_log(f"完成今日第{i + 1}次第{j + 1}轮降妖任务")
-                    break
+                break
+            if (j == 9) and mission.count() == 0:
+                DynLog.record_log(f"完成今日第{i + 1}次第{j + 1}轮降妖任务")
     DynLog.record_log("任务完成，请手动退出")
 
 

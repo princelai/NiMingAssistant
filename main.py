@@ -5,7 +5,7 @@ from playwright.sync_api import Playwright, sync_playwright
 from rich.live import Live
 
 from display import DisplayLayout
-from func_common import mission_yaoling, mission_xunbao, guaji
+from func_common import mission_yaoling, mission_xunbao, mission_xiangyao, guaji
 from func_other import valid_config, UserVars
 
 
@@ -21,6 +21,8 @@ def dispatcher(browser, user_config, user_idx):
         mission_yaoling(page, user_config, user_idx, UserVars())
     elif user_config['mission']['name'] == "寻宝":
         mission_xunbao(page, user_config, user_idx, UserVars())
+    elif user_config['mission']['name'] == "降妖":
+        mission_xiangyao(page, user_config, user_idx, UserVars())
     else:
         guaji(page, user_config, user_idx, UserVars())
 
