@@ -7,7 +7,8 @@ import pandas as pd
 from playwright.sync_api import Page
 
 from display import DynLog
-from func_other import UserVars, move_to_map, map_navigate, update_display_info, auto_fight_on
+from func_other import UserVars, update_display_info, auto_fight_on
+from map import CityMap
 
 
 def refresh_direct(page: Page):
@@ -92,7 +93,7 @@ def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: UserVar
         update_display_info(page, info_deque, user_idx, person_vars)
         page.click("text=地图场景")
         page.wait_for_timeout(timeout=300)
-        move_to_map(page, start_city)
+        CityMap.move_to_map(page, start_city)
 
         DynLog.record_log("接取药灵任务")
         page.wait_for_selector("button:has-text(\"旭日药师\")", timeout=3000)
@@ -168,7 +169,7 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVa
         update_display_info(page, info_deque, user_idx, person_vars)
         page.click("text=地图场景")
         page.wait_for_timeout(timeout=300)
-        move_to_map(page, start_city)
+        CityMap.move_to_map(page, start_city)
 
         DynLog.record_log("接取降妖任务")
         page.wait_for_selector("button:has-text(\"凌中天\")", timeout=3000)
@@ -260,7 +261,7 @@ def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: UserVars
         update_display_info(page, info_deque, user_idx, person_vars)
         page.click("text=地图场景")
         page.wait_for_timeout(timeout=300)
-        move_to_map(page, start_city)
+        CityMap.move_to_map(page, start_city)
 
         DynLog.record_log("接取寻宝任务")
         page.wait_for_selector("button:has-text(\"盗极生\")", timeout=3000)
@@ -415,7 +416,7 @@ def guaji(page: Page, user_config, user_idx: int, person_vars: UserVars):
         if page.url.endswith('login'):
             login(page, user_config.get("login"))
 
-        map_navigate(page, user_config.get("fight"))
+        CityMap.map_navigate(page, user_config.get("fight"))
         fight(page, user_config.get("fight"), person_vars)
         info_deque = defaultdict(partial(deque, maxlen=128))
         person_vars.train_start_time = datetime.now()
@@ -428,6 +429,7 @@ def guaji(page: Page, user_config, user_idx: int, person_vars: UserVars):
                 cond = 0
             # page.locator("img[height=\"10px\"]").count()
             if (page.locator("div[role=\"alert\"]:has-text(\"你已掉线...\")").count() >= 1) or (page.locator("a:has-text(\"X\")").count() == 0) or cond:
+                DynLog.record_log("程序主动重启", error=True)
                 refresh_direct(page)
                 break
             estimate1 = update_display_info(page, info_deque, user_idx, person_vars)

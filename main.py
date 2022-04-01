@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 from playwright.sync_api import Playwright, sync_playwright
 from rich.live import Live
@@ -34,6 +36,9 @@ def run(playwright: Playwright) -> None:
         conf = yaml.safe_load(f)
     conf = valid_config(conf.get('user'))
     # [f"call({i},{c})" for i,c in enumerate(conf)]
+
+    for f in Path('.').glob("*.joblib"):
+        f.unlink()
 
     # TODO(kevin):无头设置，记得每次检查一下是否为True
     browser = playwright.chromium.launch(headless=True)
