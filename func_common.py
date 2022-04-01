@@ -25,14 +25,17 @@ def refresh_direct(page: Page):
 
 def login(page: Page, login_conf: dict):
     DynLog.record_log("正在自动登录")
-    page.fill("input[placeholder=\"请输入用户名\"]", login_conf.get("username"))
-    page.wait_for_timeout(timeout=300)
-    page.fill("input[placeholder=\"请输入密码\"]", login_conf.get("password"))
-    page.wait_for_timeout(timeout=300)
-    page.check("input[type=\"checkbox\"]")
-    page.wait_for_timeout(timeout=300)
     while True:
         try:
+            page.reload()
+            page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=5000)
+            page.fill("input[placeholder=\"请输入用户名\"]", login_conf.get("username"))
+            page.wait_for_timeout(timeout=300)
+            page.fill("input[placeholder=\"请输入密码\"]", login_conf.get("password"))
+            page.wait_for_timeout(timeout=300)
+            page.check("input[type=\"checkbox\"]")
+            page.wait_for_timeout(timeout=300)
+
             with page.expect_navigation(url="https://game.nimingxx.com/home", timeout=5000):
                 page.click("button:has-text(\"立即登陆\")")
             page.wait_for_selector("text=日志记录", timeout=2000)
@@ -158,8 +161,7 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: Global
     start_city = "林中栈道"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
-    times = 3
-    while times > 0:
+    for i in range(3):
         if page.url.endswith('login'):
             login(page, user_config.get("login"))
         DynLog.record_log("开始做降妖任务")
@@ -169,14 +171,17 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: Global
         move_to_map(page, start_city)
 
         DynLog.record_log("接取降妖任务")
-        page.wait_for_timeout(timeout=2000)
+        page.wait_for_selector("button:has-text(\"凌中天\")", timeout=3000)
         # 组队
-        page.wait_for_timeout(timeout=1000)
         while (person := page.locator("button:has-text(\"凌中天\")")).count() == 1:
             person.click()
-            page.wait_for_timeout(timeout=1000)
+            page.wait_for_timeout(timeout=500)
             if page.locator("div[class=\"ant-drawer ant-drawer-bottom ant-drawer-open\"]").count() == 1:
                 page.locator("text=接取[降妖]任务").click()
+                page.wait_for_timeout(timeout=500)
+                if page.locator("text=领取上限").count() == 1:
+                    DynLog.record_log("今日任务已做完")
+                    return
                 page.wait_for_timeout(timeout=1000)
             else:
                 DynLog.record_log("任务对话框没弹出来", error=True)
@@ -192,36 +197,47 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: Global
         # 任务刷新
         mission = page.locator("text=-降妖")
         mission.hover()
-        page.wait_for_timeout(timeout=1000)
+        page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
         mission_detail = page.locator("span[class=\"task-brief\"]:has-text(\"地区击败\")")
         pattern_mission = re.search(r".+【(.+)】.*地区击败(.+)", mission_detail.inner_text())
-        # mission_city = pattern_mission.group(1).strip()
         mission_monster = pattern_mission.group(2).strip()
 
         mission.click()
         DynLog.record_log("飞过去")
-        page.wait_for_timeout(timeout=2000)
+        page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         # 战斗
         while True:
-            # page.locator(f'a div img:right-of(:text("{mission_monster}"))').first.click()
-            page.locator(f'img[title=\"挑战\"]:right-of(:text("{mission_monster}"))').first.click()
+            for tab in ("战斗日志", "地图场景"):
+                page.click(f"text={tab}")
+                page.wait_for_timeout(timeout=1000)
+            monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
+            monster_id = monster_list.index(mission_monster)
+            page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
 
             # 自动战斗
             if not auto_fight:
                 auto_fight_on(page, user_config.get("fight"), cycle=False)
                 auto_fight = True
 
-            page.wait_for_timeout(timeout=8000)
+            # 等待战斗结束
+            while True:
+                for tab in ("战斗日志", "地图场景"):
+                    page.click(f"text={tab}")
+                    page.wait_for_timeout(timeout=1000)
+                if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
+                    break
+                else:
+                    continue
+
             update_display_info(page, info_deque, user_idx, person_vars)
 
             # 任务刷新
             mission.hover()
-            page.wait_for_timeout(timeout=1000)
+            page.wait_for_selector("a[class=\"tb\"]:has-text(\"完成\")", timeout=2000)
             page.locator("a[class=\"tb\"]:has-text(\"完成\")").click()
-            page.wait_for_timeout(timeout=1000)
+            page.wait_for_timeout(timeout=500)
             if mission.count() == 0:
-                DynLog.record_log("完成一次降妖任务")
-                times -= 1
+                DynLog.record_log(f"完成今日第{i + 1}次降妖任务")
                 break
     DynLog.record_log("任务完成，请手动退出")
 
@@ -286,6 +302,7 @@ def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: GlobalVa
                 auto_fight_on(page, user_config.get("fight"), cycle=False)
                 auto_fight = True
 
+            # 等待战斗结束
             while True:
                 for tab in ("战斗日志", "地图场景"):
                     page.click(f"text={tab}")
@@ -367,13 +384,18 @@ def fight(page: Page, fight_config: dict, person_vars: GlobalVars):
             DynLog.record_log("尝试独立建队模式")
             if fight_config.get("passwd"):
                 page.click("text=需要密令")
+                page.wait_for_timeout(timeout=300)
             page.click("button:has-text(\"创建队伍\")")
+            page.wait_for_selector("a:has-text(\"X\")", timeout=1000)
             person_vars.team_leader = "自己建队"
             # TODO(kevin):队伍密码
-            page.locator(f'img:right-of(:text("{fight_config.get("monster")}"))').first.click()
+            # page.locator(f'img:right-of(:text("{fight_config.get("monster")}"))').first.click()
+            monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
+            monster_id = monster_list.index(fight_config.get("monster"))
+            page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
             break
         else:
-            DynLog.record_log("尝试独立建队模式", error=True)
+            DynLog.record_log("未知错误", error=True)
             exit(1)
 
     auto_fight_on(page, fight_config)

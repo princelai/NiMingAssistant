@@ -19,6 +19,7 @@ class GlobalVars:
     def __init__(self):
         self.train_start_time: datetime = datetime.now()
         self.team_leader: str = ""
+        self.leader_black_list: list = []
 
 
 def valid_config(confs: List[dict]) -> List[dict]:
