@@ -10,8 +10,8 @@ class CityMap:
     g = nx.read_gml('map_luofan.gml')
 
     @classmethod
-    def neighbor_city(cls, center):
-        return list(cls.g.neighbors(center))
+    def neighbor_city(cls, center) -> list:
+        return [center] + list(cls.g.neighbors(center))
 
     @classmethod
     def move_to_map(cls, page: Page, target_map: str) -> None:

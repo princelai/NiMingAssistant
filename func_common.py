@@ -176,7 +176,7 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVa
         for tab in ("战斗日志", "地图场景"):
             page.click(f"text={tab}")
             page.wait_for_timeout(timeout=500)
-        # 刷新按钮
+
         page.click("text=需要密令")
         page.wait_for_timeout(timeout=300)
         page.click("button:has-text(\"创建队伍\")")
@@ -194,6 +194,7 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVa
             else:
                 DynLog.record_log("任务对话框没弹出来", error=True)
                 continue
+            # 任务刷新
             if page.locator("text=-降妖").count() == 1:
                 DynLog.record_log("接到任务")
                 break
@@ -202,51 +203,61 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVa
         else:
             DynLog.record_log("未能正确初始化任务位置", error=True)
             continue
-        # 任务刷新
         mission = page.locator("text=-降妖")
         mission.hover()
         page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
         mission_detail = page.locator("span[class=\"task-brief\"]:has-text(\"地区击败\")")
         pattern_mission = re.search(r".+【(.+)】.*地区击败(.+)", mission_detail.inner_text())
+        mission_city = pattern_mission.group(1).strip()
         mission_monster = pattern_mission.group(2).strip()
 
         mission.click()
         DynLog.record_log("飞过去")
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
-        # 战斗
-        while True:
-            for tab in ("战斗日志", "地图场景"):
-                page.click(f"text={tab}")
-                page.wait_for_timeout(timeout=1000)
-            monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
-            monster_id = monster_list.index(mission_monster)
-            page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
-
-            # 自动战斗
-            if not auto_fight:
-                auto_fight_on(page, user_config.get("fight"), cycle=False)
-                auto_fight = True
-
-            # 等待战斗结束
+        for j in range(10):
+            for p in CityMap.neighbor_city(mission_city):
+                CityMap.move_to_map(page, p)
+                monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
+                if mission_monster in monster_list:
+                    mission_city = p
+                    break
+                else:
+                    continue
+            # 战斗
             while True:
                 for tab in ("战斗日志", "地图场景"):
                     page.click(f"text={tab}")
                     page.wait_for_timeout(timeout=1000)
-                if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
+                monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
+                monster_id = monster_list.index(mission_monster)
+                page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
+
+                # 自动战斗
+                if not auto_fight:
+                    auto_fight_on(page, user_config.get("fight"), cycle=False)
+                    auto_fight = True
+
+                # 等待战斗结束
+                while True:
+                    # 如何才能判断降妖任务完成？因为有可能打不过
+                    for tab in ("战斗日志", "地图场景"):
+                        page.click(f"text={tab}")
+                        page.wait_for_timeout(timeout=1000)
+                    if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
+                        break
+                    else:
+                        continue
+
+                update_display_info(page, info_deque, user_idx, person_vars)
+
+                # 任务刷新
+                mission.hover()
+                page.wait_for_selector("a[class=\"tb\"]:has-text(\"完成\")", timeout=2000)
+                page.locator("a[class=\"tb\"]:has-text(\"完成\")").click()
+                page.wait_for_timeout(timeout=500)
+                if mission.count() == 0:
+                    DynLog.record_log(f"完成今日第{i + 1}次第{j + 1}轮降妖任务")
                     break
-                else:
-                    continue
-
-            update_display_info(page, info_deque, user_idx, person_vars)
-
-            # 任务刷新
-            mission.hover()
-            page.wait_for_selector("a[class=\"tb\"]:has-text(\"完成\")", timeout=2000)
-            page.locator("a[class=\"tb\"]:has-text(\"完成\")").click()
-            page.wait_for_timeout(timeout=500)
-            if mission.count() == 0:
-                DynLog.record_log(f"完成今日第{i + 1}次降妖任务")
-                break
     DynLog.record_log("任务完成，请手动退出")
 
 
