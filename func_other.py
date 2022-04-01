@@ -12,10 +12,7 @@ from playwright.sync_api import Page
 from display import DynLog, DisplayLayout
 
 
-class GlobalVars:
-    program_start_time: datetime = datetime.now()
-    team_passwd: str = ""
-
+class UserVars:
     def __init__(self):
         self.train_start_time: datetime = datetime.now()
         self.team_leader: str = ""
@@ -202,7 +199,7 @@ def map_navigate(page: Page, fight_config: dict):
     move_to_map(page, target_map)
 
 
-def update_display_info(page: Page, info_deque, user_idx, person_vars: GlobalVars) -> dict:
+def update_display_info(page: Page, info_deque, user_idx, person_vars: UserVars) -> dict:
     user_info = get_user_info(page)
     info_deque['time'].append(datetime.now())
     info_deque['exp'].append(user_info['修为'])

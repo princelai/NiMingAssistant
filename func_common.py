@@ -7,7 +7,7 @@ import pandas as pd
 from playwright.sync_api import Page
 
 from display import DynLog
-from func_other import GlobalVars, move_to_map, map_navigate, update_display_info, auto_fight_on
+from func_other import UserVars, move_to_map, map_navigate, update_display_info, auto_fight_on
 
 
 def refresh_direct(page: Page):
@@ -81,7 +81,7 @@ def login(page: Page, login_conf: dict):
     page.wait_for_timeout(timeout=300)
 
 
-def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: GlobalVars):
+def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: UserVars):
     start_city = "丹城"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
@@ -157,7 +157,7 @@ def mission_yaoling(page: Page, user_config, user_idx: int, person_vars: GlobalV
     DynLog.record_log("任务完成，请手动退出")
 
 
-def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: GlobalVars):
+def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: UserVars):
     start_city = "林中栈道"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
@@ -172,7 +172,14 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: Global
 
         DynLog.record_log("接取降妖任务")
         page.wait_for_selector("button:has-text(\"凌中天\")", timeout=3000)
-        # 组队
+        for tab in ("战斗日志", "地图场景"):
+            page.click(f"text={tab}")
+            page.wait_for_timeout(timeout=500)
+        # 刷新按钮
+        page.click("text=需要密令")
+        page.wait_for_timeout(timeout=300)
+        page.click("button:has-text(\"创建队伍\")")
+        page.wait_for_selector("a:has-text(\"X\")", timeout=1000)
         while (person := page.locator("button:has-text(\"凌中天\")")).count() == 1:
             person.click()
             page.wait_for_timeout(timeout=500)
@@ -242,7 +249,7 @@ def mission_xiangyao(page: Page, user_config, user_idx: int, person_vars: Global
     DynLog.record_log("任务完成，请手动退出")
 
 
-def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: GlobalVars):
+def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: UserVars):
     start_city = "阳城"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
@@ -323,7 +330,7 @@ def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: GlobalVa
     DynLog.record_log("任务完成，请手动退出")
 
 
-def fight(page: Page, fight_config: dict, person_vars: GlobalVars):
+def fight(page: Page, fight_config: dict, person_vars: UserVars):
     DynLog.record_log("正在开启自动战斗")
     page.click("text=地图场景")
     page.wait_for_timeout(timeout=300)
@@ -389,7 +396,8 @@ def fight(page: Page, fight_config: dict, person_vars: GlobalVars):
             page.wait_for_selector("a:has-text(\"X\")", timeout=1000)
             person_vars.team_leader = "自己建队"
             # TODO(kevin):队伍密码
-            # page.locator(f'img:right-of(:text("{fight_config.get("monster")}"))').first.click()
+            # if page.locator("text=队伍密令")
+            # joblib.load("team_passwd.joblib")
             monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
             monster_id = monster_list.index(fight_config.get("monster"))
             page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
@@ -402,7 +410,7 @@ def fight(page: Page, fight_config: dict, person_vars: GlobalVars):
     DynLog.record_log("开始挂机")
 
 
-def guaji(page: Page, user_config, user_idx: int, person_vars: GlobalVars):
+def guaji(page: Page, user_config, user_idx: int, person_vars: UserVars):
     while True:
         if page.url.endswith('login'):
             login(page, user_config.get("login"))
@@ -414,11 +422,12 @@ def guaji(page: Page, user_config, user_idx: int, person_vars: GlobalVars):
         estimate1 = {}
         while True:
             if estimate1:
-                cond = (estimate1['exp'] < 5e5) + (estimate1['hp'] < -3e5) + (estimate1['hm'] > 2e2)
+                # cond = (estimate1['exp'] < 5e5) + (estimate1['hp'] < -3e5) + (estimate1['hm'] > 2e2)
+                cond = estimate1['hm'] > 2e2
             else:
                 cond = 0
             # page.locator("img[height=\"10px\"]").count()
-            if (page.locator("div[role=\"alert\"]:has-text(\"你已掉线...\")").count() >= 1) or (page.locator("a:has-text(\"X\")").count() == 0) or cond >= 2:
+            if (page.locator("div[role=\"alert\"]:has-text(\"你已掉线...\")").count() >= 1) or (page.locator("a:has-text(\"X\")").count() == 0) or cond:
                 refresh_direct(page)
                 break
             estimate1 = update_display_info(page, info_deque, user_idx, person_vars)

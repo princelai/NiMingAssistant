@@ -4,7 +4,7 @@ from rich.live import Live
 
 from display import DisplayLayout
 from func_common import mission_yaoling, mission_xunbao, guaji
-from func_other import valid_config, GlobalVars
+from func_other import valid_config, UserVars
 
 
 def dispatcher(browser, user_config, user_idx):
@@ -16,11 +16,11 @@ def dispatcher(browser, user_config, user_idx):
     page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=5000)
 
     if user_config['mission']['name'] == "药灵":
-        mission_yaoling(page, user_config, user_idx, GlobalVars())
+        mission_yaoling(page, user_config, user_idx, UserVars())
     elif user_config['mission']['name'] == "寻宝":
-        mission_xunbao(page, user_config, user_idx, GlobalVars())
+        mission_xunbao(page, user_config, user_idx, UserVars())
     else:
-        guaji(page, user_config, user_idx, GlobalVars())
+        guaji(page, user_config, user_idx, UserVars())
 
     try:
         page.pause()
