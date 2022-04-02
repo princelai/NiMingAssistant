@@ -164,8 +164,8 @@ def auto_fight_on(page: Page, fight_config: dict, cycle=True):
     else:
         # point skill
         skill_name = fight_config.get("skill")
-        page.wait_for_selector(f"img[alt=\"{skill_name}\"]", timeout=15000)
-        skill = page.locator(f"img[alt=\"{skill_name}\"]")
+        page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"{skill_name}\"]", timeout=15000)
+        skill = page.locator(f"div[class=\"skill-bar\"] > div > img[alt=\"{skill_name}\"]")
         if skill.count() == 1:
             skill.click()
         else:
