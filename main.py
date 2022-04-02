@@ -46,7 +46,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=True)
 
     user_idx = 0
-    with Live(DisplayLayout.my_layout, refresh_per_second=4, screen=True):
+    with Live(DisplayLayout.my_layout, refresh_per_second=8, screen=True):
         dispatcher(browser, conf[user_idx], user_idx)
     browser.close()
 

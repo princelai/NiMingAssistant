@@ -33,7 +33,7 @@ class ProgramInfo:
         time1_str = f"{int(match_time1.group(1))}天{int(match_time1.group(2))}小时{int(match_time1.group(3))}分"
         info1 = Align.center(Text(time1_str, style="bold magenta", justify="center"))
         info2 = Text(
-            """Version:0.7.5\n继续进化中""",
+            """Version:0.8.4\n继续进化中""",
             justify="center",
         )
 
@@ -115,15 +115,15 @@ class UserMainInfo:
 
 
 class DynLog:
-    log_progress = Progress(SpinnerColumn(), TextColumn("{task.description}"))
+    log_progress = Progress(SpinnerColumn(), TextColumn("[{task.fields[dt]}] {task.description}"))
 
     @classmethod
     def record_log(cls, s, error=False):
         task_id = cls.log_progress.add_task("")
         if error:
-            cls.log_progress.update(task_id, description=f"[red]{s}")
+            cls.log_progress.update(task_id, description=f"[red]{s}", dt=datetime.now().strftime("%H:%M:%S"))
         else:
-            cls.log_progress.update(task_id, description=f"[green]{s}")
+            cls.log_progress.update(task_id, description=f"[green]{s}", dt=datetime.now().strftime("%H:%M:%S"))
         if task_id >= 1:
             cls.log_progress.update(TaskID(task_id - 1), completed=100)
         if task_id >= 6:

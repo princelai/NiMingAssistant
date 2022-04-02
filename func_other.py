@@ -81,7 +81,7 @@ def estimate_info(deq) -> Tuple[dict, dict]:
     df['time'] = pd.to_datetime(df.time)
     df.set_index('time', inplace=True)
     df = df.loc[datetime.now() - timedelta(minutes=30):datetime.now()]
-    if df.shape[0] < 20:
+    if df.shape[0] < 10:
         return {}, {}
     df_diff = df.diff(axis=0).dropna(how='all')
     df_diff["exp"] *= -1

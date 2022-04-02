@@ -350,14 +350,15 @@ def mission_xunbao(page: Page, user_config, user_idx: int, person_vars: UserVars
 
 def fight(page: Page, fight_config: dict, person_vars: UserVars):
     DynLog.record_log("正在开启自动战斗")
-    page.click("text=地图场景")
-    page.wait_for_timeout(timeout=300)
+    for tab in ("储物戒", "地图场景"):
+        page.click(f"text={tab}")
+        page.wait_for_timeout(timeout=1000)
     page.click("button:has-text(\"刷新列表\")")
 
     while True:
         # TODO(kevin):增加一个fallback模式
         if fight_config.get("captain") is not None or not fight_config.get("alone"):
-            page.wait_for_timeout(timeout=600)
+            page.wait_for_timeout(timeout=5000)
             team_list = page.locator("[class=\"team-list-row el-row\"]")
             d = defaultdict(list)
             for i in range(team_list.count()):
@@ -450,4 +451,4 @@ def guaji(page: Page, user_config, user_idx: int, person_vars: UserVars):
                 refresh_direct(page)
                 break
             estimate1 = update_display_info(page, info_deque, user_idx, person_vars)
-            page.wait_for_timeout(timeout=29500)
+            page.wait_for_timeout(timeout=10000)
