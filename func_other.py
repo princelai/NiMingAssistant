@@ -14,41 +14,36 @@ class UserVars:
     def __init__(self):
         self.train_start_time: datetime = datetime.now()
         self.team_leader: str = ""
-        self.leader_black_list: list = []
 
 
-def valid_config(confs: List[dict]) -> List[dict]:
-    new_configs = []
-    for c in confs:
-        new_c = {}
-        if bool(c.get('login', {}).get("username")) & bool(c.get('login', {}).get("password")):
-            new_c['login'] = c.get('login')
-        else:
-            DynLog.record_log("未正确配置登录信息", error=True)
-            exit(1)
-        new_c['fight'] = {}
-        new_c['mission'] = {}
-        if (v1 := c.get('fight', {}).get("alone")) is None:
-            new_c['fight'].update({"alone": True})
-        else:
-            new_c['fight'].update({"alone": v1})
-        if (v2 := c.get('fight', {}).get("passwd")) is None:
-            new_c['fight'].update({"passwd": False})
-        else:
-            new_c['fight'].update({"passwd": v2})
-        if (v3 := c.get('fight', {}).get("monster")) is None:
-            new_c['fight'].update({"monster": '冰莲灵兽群'})
-        else:
-            new_c['fight'].update({"monster": v3})
-        new_c['fight'].update({"captain": c.get('fight', {}).get("captain")})
-        new_c['fight'].update({"skill": c.get('fight', {}).get("skill")})
-        new_c['mission'].update({"name": c.get('mission', {}).get("name")})
-        new_configs.append(new_c)
-    return new_configs
+def valid_config(c: dict) -> dict:
+    new_c = {}
+    if bool(c.get('login', {}).get("username")) & bool(c.get('login', {}).get("password")):
+        new_c['login'] = c.get('login')
+    else:
+        DynLog.record_log("未正确配置登录信息", error=True)
+        exit(1)
+    new_c['fight'] = {}
+    new_c['mission'] = {}
+    if (v1 := c.get('fight', {}).get("skill")) is not None:
+        new_c['fight'].update({"skill": v1})
+    else:
+        DynLog.record_log("未正确配置技能信息", error=True)
+        exit(1)
+    if (v2 := c.get('fight', {}).get("monster")) is None:
+        new_c['fight'].update({"monster": '陆地兽群'})
+    else:
+        new_c['fight'].update({"monster": v2})
+    new_c['mission'].update({"name": c.get('mission', {}).get("name")})
+    return new_c
 
 
 def get_user_info(page: Page) -> dict:
     d = dict()
+    page.click("div[id=\"tab-1\"]:has-text(\"装备\")")
+    page.wait_for_timeout(timeout=500)
+    page.click("div[id=\"tab-0\"]:has-text(\"信息\")")
+    page.wait_for_timeout(timeout=500)
     d['经验条'] = page.locator("[class=\"exp\"]").inner_text()
     d['名称'] = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"名称\"))").first.inner_text()
     d['修为'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"修为\"))").first.inner_text())
@@ -56,6 +51,7 @@ def get_user_info(page: Page) -> dict:
     d['魔法储备'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"魔法储备\"))").first.inner_text())
     d['心魔'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"心魔\"))").first.inner_text())
     d['速力'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"速力\"))").first.inner_text())
+    # TODO(kevin):灵力
     if d['气血储备'] < 50000:
         exchange_hp(page)
     if d['魔法储备'] < 50000:
@@ -76,11 +72,11 @@ def get_fight_result(page: Page):
 
 
 def estimate_info(deq) -> Tuple[dict, dict]:
-    # df = pd.DataFrame(joblib.load("user0_deque.joblib"))
+    # df = pd.DataFrame(joblib.load("user_deque.joblib"))
     df = pd.DataFrame(deq)
     df['time'] = pd.to_datetime(df.time)
     df.set_index('time', inplace=True)
-    df = df.loc[datetime.now() - timedelta(minutes=30):datetime.now()]
+    df = df.loc[datetime.now() - timedelta(minutes=15):datetime.now()]
     if df.shape[0] < 10:
         return {}, {}
     df_diff = df.diff(axis=0).dropna(how='all')
@@ -125,7 +121,7 @@ def exchange_sl(page: Page, ling=5000):
     DynLog.record_log("继续挂机中")
 
 
-def update_display_info(page: Page, info_deque, user_idx, person_vars: UserVars) -> dict:
+def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
     user_info = get_user_info(page)
     info_deque['time'].append(datetime.now())
     info_deque['exp'].append(user_info['修为'])
@@ -133,7 +129,7 @@ def update_display_info(page: Page, info_deque, user_idx, person_vars: UserVars)
     info_deque['mp'].append(user_info['魔法储备'])
     info_deque['hm'].append(user_info['心魔'])
     stats, reward = get_fight_result(page)
-    joblib.dump(info_deque, f"user{user_idx}_deque.joblib")
+    joblib.dump(info_deque, f"user_deque.joblib")
     estimate1, estimate2 = estimate_info(info_deque)
 
     train_time = pd.to_timedelta(datetime.now() - person_vars.train_start_time).ceil('T')
@@ -148,35 +144,19 @@ def update_display_info(page: Page, info_deque, user_idx, person_vars: UserVars)
           "reward_info": reward,
           "estimate_info": estimate2}
 
-    DisplayLayout.update_user_info(block=f"user{user_idx}", value=dd)
+    DisplayLayout.update_user_info(value=dd)
     return estimate1
 
 
-def auto_fight_on(page: Page, fight_config: dict, cycle=True):
+def auto_fight_on(page: Page, cycle=True):
     page.click("text=战斗日志")
-    page.wait_for_timeout(timeout=500)
-    if fight_config.get("skill") is None:
-        # last skill
-        page.wait_for_selector("div[class=\"skill-bar\"] > div > img", timeout=15000)
-        skill = page.locator("div[class=\"skill-bar\"] > div > img").last
-        skill_name = skill.get_attribute("alt")
-        skill.click()
-    else:
-        # point skill
-        skill_name = fight_config.get("skill")
-        page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"{skill_name}\"]", timeout=15000)
-        skill = page.locator(f"div[class=\"skill-bar\"] > div > img[alt=\"{skill_name}\"]")
-        if skill.count() == 1:
-            skill.click()
-        else:
-            DynLog.record_log("你还没学会配置的技能", error=True)
-            exit(1)
-    page.wait_for_timeout(timeout=300)
+    page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"普通攻击\"]", timeout=15000)
+
     if cycle:
         page.click("text=循环挑战")
         page.wait_for_timeout(timeout=300)
 
-    auto_fight_box = page.locator(f"text=自动 ↓技能↓ {skill_name} ↓目标↓ >> input[type=\"checkbox\"]")
+    auto_fight_box = page.locator(f"text=自动 ↓技能↓ >> input[type=\"checkbox\"]")
     auto_fight_box.check()
     page.wait_for_timeout(timeout=300)
     page.click("text=地图场景")

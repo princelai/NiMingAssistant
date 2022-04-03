@@ -1,5 +1,3 @@
-from math import ceil
-
 import networkx as nx
 from playwright.sync_api import Page
 
@@ -17,50 +15,16 @@ class CityMap:
     def move_to_map(cls, page: Page, target_map: str) -> None:
         curr_map = page.locator("text=当前地图").inner_text()
         curr_map = curr_map.split(":")[1].strip()
-        map_step = 15
         if curr_map != target_map:
             DynLog.record_log(f"正在寻路去往{target_map}")
             walk_path = nx.shortest_path(cls.g, curr_map, target_map)[1:]
             for p in walk_path:
-                city_loc_idx = 0
-                svg_frame_text = page.locator("svg[class=\"svg\"] >> text")
-                if (city_loc := svg_frame_text.locator(f"text={p}")).count() == 1:
-                    x = int(city_loc.get_attribute('x'))
-                    y = int(city_loc.get_attribute('y'))
-                else:
-                    # 处理类似阳城和阳城驿站这种
-                    city_loc_txt = city_loc.all_text_contents()
-                    city_loc_txt = list(map(lambda z: z.strip(), city_loc_txt))
-                    city_loc_idx = city_loc_txt.index(p)
-                    x = int(city_loc.nth(city_loc_idx).get_attribute('x'))
-                    y = int(city_loc.nth(city_loc_idx).get_attribute('y'))
+                near_city = page.locator("div[class=\"can-move-map\"] > span")
+                for i in range(near_city.count()):
+                    if near_city.nth(i).inner_text() == p:
+                        near_city.nth(i).click()
+                        break
 
-                if x <= (x_min := 40):
-                    move_left = page.locator("div[class=\"move-d move-left\"]")
-                    for _ in range(ceil(abs((x - x_min) / map_step))):
-                        move_left.click()
-                        page.wait_for_timeout(timeout=300)
-
-                if x >= (x_max := 400):
-                    move_right = page.locator("div[class=\"move-d move-right\"]")
-                    for _ in range(ceil(abs((x - x_max) / map_step))):
-                        move_right.click()
-                        page.wait_for_timeout(timeout=300)
-
-                if y <= (y_min := 60):
-                    move_top = page.locator("div[class=\"move-d move-top\"]")
-                    for _ in range(ceil(abs((y - y_min) / map_step))):
-                        move_top.click()
-                        page.wait_for_timeout(timeout=300)
-
-                if y >= (y_max := 230):
-                    move_bottom = page.locator("div[class=\"move-d move-bottom\"]")
-                    for _ in range(ceil(abs((y - y_max) / map_step))):
-                        move_bottom.click()
-                        page.wait_for_timeout(timeout=300)
-
-                page.wait_for_timeout(timeout=1000)
-                svg_frame_text.locator(f"text={p}").nth(city_loc_idx).click()
                 DynLog.record_log(f"路过{p}")
                 page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=10000)
             DynLog.record_log("已到达指定地图")

@@ -20,9 +20,8 @@ class GlobalVars:
 
 def make_layout():
     layout = Layout()
-    layout.split_column(Layout(name="upper", ratio=1), Layout(name="lower", ratio=2))
-    layout["upper"].split_row(Layout(name="log", ratio=1), Layout(name="info", ratio=2))
-    layout["lower"].split_row(Layout(name="user0"), Layout(name="user1"))
+    layout.split_row(Layout(name="log", ratio=1), Layout(name="detail", ratio=3))
+    layout["detail"].split_column(Layout(name="info", ratio=1), Layout(name="user", ratio=3))
     return layout
 
 
@@ -30,19 +29,15 @@ class ProgramInfo:
     def __rich__(self) -> Panel:
         program_time = pd.to_timedelta(datetime.now() - GlobalVars.program_start_time).ceil('T')
         match_time1 = re.search(r"(\d+)\sdays\s(\d+):(\d+)", str(program_time))
-        time1_str = f"{int(match_time1.group(1))}天{int(match_time1.group(2))}小时{int(match_time1.group(3))}分"
+        time1_str = f"程序运行时间: {int(match_time1.group(1))}天{int(match_time1.group(2))}小时{int(match_time1.group(3))}分"
         info1 = Align.center(Text(time1_str, style="bold magenta", justify="center"))
         info2 = Text(
-            """Version:0.8.4\n继续进化中""",
+            """Version:0.8.4  项目主页:https://github.com/princelai/NiMingAssistant""",
             justify="center",
         )
 
-        info3 = Text(
-            """项目主页:https://github.com/princelai/NiMingAssistant""",
-            justify="center",
-        )
         info_panel = Panel(
-            Group(info1, info2, info3),
+            Group(info1, info2),
             box=box.ROUNDED,
             padding=(1, 1),
             title="[b]匿名修仙[/b]挂机辅助",
@@ -126,8 +121,8 @@ class DynLog:
             cls.log_progress.update(task_id, description=f"[green]{s}", dt=datetime.now().strftime("%H:%M:%S"))
         if task_id >= 1:
             cls.log_progress.update(TaskID(task_id - 1), completed=100)
-        if task_id >= 6:
-            cls.log_progress.update(TaskID(task_id - 6), visible=False)
+        if task_id >= 20:
+            cls.log_progress.update(TaskID(task_id - 20), visible=False)
 
 
 class DisplayLayout:
@@ -136,8 +131,8 @@ class DisplayLayout:
     my_layout["log"].update(Panel(DynLog.log_progress, title="运行日志"))
 
     @classmethod
-    def update_user_info(cls, block, value):
-        cls.my_layout[block].update(UserMainInfo(values=value))
+    def update_user_info(cls, value):
+        cls.my_layout["user"].update(UserMainInfo(values=value))
 
 
 if __name__ == "__main__":
@@ -152,8 +147,8 @@ if __name__ == "__main__":
           "reward_info": {"物品1": 14, "物品2": 3},
           "estimate_info": {'exp': '232.0万/小时', 'hp': '1724.1/小时', 'mp': '9.1万/小时', 'hm': '0.0/小时'}}
 
-    with Live(my_layout, refresh_per_second=2, screen=True) as live:
-        my_layout["user0"].update(UserMainInfo(values=dd))
+    with Live(my_layout, refresh_per_second=4, screen=True) as live:
+        my_layout["user"].update(UserMainInfo(values=dd))
         for i in range(15):
             task_id = log_progress.add_task("")
             s = str(i) * 10
@@ -163,6 +158,6 @@ if __name__ == "__main__":
                 log_progress.update(task_id, description=f"[green]{s}")
             if i >= 1:
                 log_progress.update(task_id - 1, completed=100)
-            if i >= 6:
-                log_progress.update(task_id - 6, visible=False)
-            time.sleep(10)
+            if i >= 20:
+                log_progress.update(task_id - 20, visible=False)
+            time.sleep(5)

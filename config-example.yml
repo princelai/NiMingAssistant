@@ -1,23 +1,8 @@
-user:
-  - login:
-      username:  # 用户名
-      password:  # 登陆密码
-    fight:
-      alone: False # 是否独立成队
-      passwd: False # 队伍是否设置密码，当alone是True时生效
-      monster: 飞羽兽群 # 要打的怪物，默认是冰莲灵兽群去打蛋
-      captain:  # 是否寻找队长加入队伍，填队长名字
-      skill: 摧心炎 # 不指定技能就使用最后一个技能
-    mission:
-      name:  # 目前只有药灵、寻宝，配置了就是任务优先级最高
-#  - login:
-#      username:
-#      password:
-#    fight:
-#      alone: False
-#      passwd: False
-#      monster:
-#      captain:
-#      skill:
-#    mission:
-#      name:
+login:
+  username:  # 用户名
+  password:  # 登陆密码
+fight:
+  monster: 钻地兽群 # 要打的怪物，默认是陆地兽群
+  skill: 落叶萧萧 # 必须指定技能
+mission:
+  name:  # 目前只有药灵、寻宝、降妖，配置了就是任务优先级最高
