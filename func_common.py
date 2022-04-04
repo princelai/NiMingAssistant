@@ -94,6 +94,8 @@ def login(page: Page, conf: dict):
     page.wait_for_timeout(timeout=500)
     page.locator("button[type=button]:has-text(\"保存\")").click()
     page.wait_for_timeout(timeout=500)
+    page.click("text=地图场景")
+    page.wait_for_timeout(timeout=500)
 
 
 def mission_yaoling(page: Page, user_config, person_vars: UserVars):
@@ -277,9 +279,10 @@ def mission_xiangyao(page: Page, user_config,  person_vars: UserVars):
 
                 page.locator("i[class=\"el-icon-refresh\"]").click()
                 page.wait_for_timeout(timeout=500)
+                DynLog.record_log(f"完成今日第{i + 1}次第{j + 1}轮降妖任务")
                 break
             if (j == 9) and mission.count() == 0:
-                DynLog.record_log(f"完成今日第{i + 1}次第{j + 1}轮降妖任务")
+                DynLog.record_log(f"完成今日第{i + 1}次降妖任务")
     DynLog.record_log("任务完成，请手动退出")
 
 

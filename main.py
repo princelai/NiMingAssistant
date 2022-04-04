@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import fire
 import yaml
 from playwright.sync_api import Playwright, sync_playwright
 from rich.live import Live
@@ -7,6 +8,14 @@ from rich.live import Live
 from display import DisplayLayout
 from func_common import mission_yaoling, mission_xunbao, mission_xiangyao, guaji
 from func_other import valid_config, UserVars
+
+
+def cmd_args(conf="config.yml"):
+    f = Path(conf)
+    if f.exists():
+        return conf
+    else:
+        exit(1)
 
 
 def dispatcher(browser, user_config):
@@ -34,7 +43,7 @@ def dispatcher(browser, user_config):
 
 
 def run(playwright: Playwright) -> None:
-    with open('config.yml', 'r', encoding='utf-8') as f:
+    with open(args_conf, 'r', encoding='utf-8') as f:
         conf = yaml.safe_load(f)
     user_config = valid_config(conf)
 
@@ -42,19 +51,17 @@ def run(playwright: Playwright) -> None:
         f.unlink()
 
     # TODO(kevin):无头设置，记得每次检查一下是否为True
-    browser = playwright.chromium.launch(headless=True)
+    browser = playwright.chromium.launch(headless=False)
 
     with Live(DisplayLayout.my_layout, refresh_per_second=8, screen=True):
         dispatcher(browser, user_config)
     browser.close()
 
 
-def main():
-    pass
-
-
 if __name__ == "__main__":
     # playwright = sync_playwright().start()
     # playwright codegen game.nimingxx.com
+    # args_conf = "config.yml"
+    args_conf = fire.Fire(cmd_args)
     with sync_playwright() as pw:
         run(pw)

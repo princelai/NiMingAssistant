@@ -13,6 +13,7 @@ class CityMap:
 
     @classmethod
     def move_to_map(cls, page: Page, target_map: str) -> None:
+        page.wait_for_timeout(timeout=1500)
         curr_map = page.locator("text=当前地图").inner_text()
         curr_map = curr_map.split(":")[1].strip()
         if curr_map != target_map:

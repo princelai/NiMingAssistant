@@ -4,5 +4,7 @@ login:
 fight:
   monster: 钻地兽群 # 要打的怪物，默认是陆地兽群
   skill: 落叶萧萧 # 必须指定技能
+  captain:
+  fallback: False
 mission:
-  name:  # 目前只有药灵、寻宝、降妖，配置了就是任务优先级最高
+  name:   # 目前有药灵、寻宝、降妖，配置了就是任务优先级最高

@@ -34,6 +34,9 @@ def valid_config(c: dict) -> dict:
         new_c['fight'].update({"monster": '陆地兽群'})
     else:
         new_c['fight'].update({"monster": v2})
+
+    new_c['fight'].update({"captain": c.get('fight', {}).get("captain")})
+    new_c['fight'].update({"fallback": c.get('fight', {}).get("fallback")})
     new_c['mission'].update({"name": c.get('mission', {}).get("name")})
     return new_c
 
@@ -95,7 +98,8 @@ def exchange_hp(page: Page, ling=5000):
     DynLog.record_log("兑换一次气血")
     page.locator("text=总灵力").hover()
     page.wait_for_timeout(timeout=300)
-    page.locator("input[role=\"spinbutton\"]").fill(str(ling))
+    # page.locator("input[role=\"spinbutton\"]").fill(str(ling))
+    page.locator("input[max=\"100000\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
     page.locator("a:has-text(\"聚灵\")").click()
     DynLog.record_log("继续挂机中")
@@ -105,7 +109,8 @@ def exchange_mp(page: Page, ling=5000):
     DynLog.record_log("兑换一次魔法")
     page.locator("text=总灵力").hover()
     page.wait_for_timeout(timeout=300)
-    page.locator("input[role=\"spinbutton\"]").fill(str(ling))
+    # page.locator("input[role=\"spinbutton\"]").fill(str(ling))
+    page.locator("input[max=\"100000\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
     page.locator("a:has-text(\"凝元\")").click()
     DynLog.record_log("继续挂机中")
@@ -115,7 +120,8 @@ def exchange_sl(page: Page, ling=5000):
     DynLog.record_log("兑换一次速力")
     page.locator("text=总灵力").hover()
     page.wait_for_timeout(timeout=300)
-    page.locator("input[role=\"spinbutton\"]").fill(str(ling))
+    # page.locator("input[role=\"spinbutton\"]").fill(str(ling))
+    page.locator("input[max=\"100000\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
     page.locator("a:has-text(\"炼神\")").click()
     DynLog.record_log("继续挂机中")
