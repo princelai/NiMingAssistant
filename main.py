@@ -51,7 +51,7 @@ def run(playwright: Playwright) -> None:
         f.unlink()
 
     # TODO(kevin):无头设置，记得每次检查一下是否为True
-    browser = playwright.chromium.launch(headless=False)
+    browser = playwright.chromium.launch(headless=True)
 
     with Live(DisplayLayout.my_layout, refresh_per_second=8, screen=True):
         dispatcher(browser, user_config)
@@ -61,7 +61,7 @@ def run(playwright: Playwright) -> None:
 if __name__ == "__main__":
     # playwright = sync_playwright().start()
     # playwright codegen game.nimingxx.com
-    # args_conf = "config.yml"
+    # args_conf = "config1.yml"
     args_conf = fire.Fire(cmd_args)
     with sync_playwright() as pw:
         run(pw)

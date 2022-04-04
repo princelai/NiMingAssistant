@@ -4,5 +4,7 @@ config.yml
 map_graph.py
 myself.md
 test.py
-user0_deque.joblib
-team_passwd.joblib
+*.joblib
+.zsh_history
+config1.yml
+config2.yml
