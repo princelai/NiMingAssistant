@@ -397,8 +397,8 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
     page.click("button:has-text(\"刷新列表\")")
 
     while True:
-        df_team = get_team_list(page)
         if fight_config.get("captain"):
+            df_team = get_team_list(page)
             if fight_config.get("captain") in df_team.captain.values:
                 try:
                     df_team.loc[df_team.captain == fight_config.get("captain"), "join_team"].iloc[0].click()
@@ -436,6 +436,7 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
             monster_id = monster_list.index(fight_config.get("monster"))
             page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
             auto_fight_on(page)
+            df_team = get_team_list(page)
             name = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"名称\"))").first.inner_text()
             if not df_team.empty and name in df_team.captain.values:
                 f = Path("password.bin")
