@@ -28,7 +28,7 @@ def get_team_list(page: Page) -> DataFrame:
         d['team_size'].append(team_info[2])
         d['encryption'].append(team_list.nth(i).locator("svg[data-icon=\"lock\"]"))
         d['join_team'].append(team_list.nth(i).locator("a:has-text(\"+\")"))
-    df = pd.DataFrame(d)
+    df = pd.DataFrame(d, columns=['captain', 'monster', 'team_size', 'encryption', 'join_team'])
     return df
 
 

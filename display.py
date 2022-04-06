@@ -74,13 +74,14 @@ class UserMainInfo:
 
     def make_user_status(self):
         message = Table.grid(expand=True)
-        for _ in range(5):
+        for _ in range(6):
             message.add_column(justify="right")
             message.add_column(justify="left")
         message.add_row("经验条:", self.values.get("user_info", {}).get("经验条", ""),
                         "修为:", str(self.values.get("user_info", {}).get("修为", "")),
                         "气血储备:", str(self.values.get("user_info", {}).get("气血储备", "")),
                         "魔法储备:", str(self.values.get("user_info", {}).get("魔法储备", "")),
+                        "灵力:", str(self.values.get("user_info", {}).get("灵力", "")),
                         "心魔:", str(self.values.get("user_info", {}).get("心魔", "")))
         return Panel(message, title="角色信息")
 
@@ -96,12 +97,13 @@ class UserMainInfo:
 
     def make_estimate_info(self):
         message = Table.grid(expand=True)
-        for _ in range(4):
+        for _ in range(5):
             message.add_column(justify="right")
             message.add_column(justify="left")
         message.add_row("经验获取:", self.values.get("estimate_info", {}).get("exp", ""),
                         "气血损伤:", self.values.get("estimate_info", {}).get("hp", ""),
                         "魔法消耗:", self.values.get("estimate_info", {}).get("mp", ""),
+                        "灵力损益:", self.values.get("estimate_info", {}).get("ll", ""),
                         "心魔增长:", self.values.get("estimate_info", {}).get("hm", ""))
         return Panel(message, title="预估信息")
 

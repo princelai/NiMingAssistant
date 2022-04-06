@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from typing import Tuple
 
 import joblib
-import numpy as np
 import pandas as pd
 from playwright.sync_api import Page
 
@@ -29,7 +28,7 @@ def get_user_info(page: Page) -> dict:
     d['魔法储备'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"魔法储备\"))").first.inner_text())
     d['心魔'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"心魔\"))").first.inner_text())
     d['速力'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"速力\"))").first.inner_text())
-    # TODO(kevin):灵力
+    d['灵力'] = int(re.search(r"总灵力\((\d+)\)", page.locator("text=总灵力").inner_text()).group(1))
     if d['气血储备'] < 50000:
         exchange_hp(page)
     if d['魔法储备'] < 50000:
@@ -54,15 +53,15 @@ def estimate_info(deq) -> Tuple[dict, dict]:
     df = pd.DataFrame(deq)
     df['time'] = pd.to_datetime(df.time)
     df.set_index('time', inplace=True)
-    df = df.loc[datetime.now() - timedelta(minutes=15):datetime.now()]
+    df = df.loc[datetime.now() - timedelta(minutes=20):datetime.now()]
     if df.shape[0] < 10:
         return {}, {}
     df_diff = df.diff(axis=0).dropna(how='all')
-    df_diff["exp"] *= -1
-    df_diff["hm"] *= -1
-    df_diff = df_diff.apply(lambda x: np.where(x <= 0, x, x.median()))
-    df_diff["exp"] *= -1
-    df_diff["hm"] *= -1
+    df_diff["exp"] = df_diff.exp.where(df_diff.exp >= 0, df_diff.exp.median())
+    df_diff["hm"] = df_diff.hm.where(df_diff.hm >= 0, df_diff.hm.mean())
+    df_diff["hp"] = df_diff.hp.where(df_diff.hp <= 0, df_diff.hp.median())
+    df_diff["mp"] = df_diff.mp.where(df_diff.mp <= 0, df_diff.mp.median())
+    df_diff["ll"].fillna(df_diff.ll.mean(), inplace=True)
     deque_sec = (df_diff.index[-1] - df_diff.index[0]).total_seconds()
     estimate_result = (df_diff.sum() / deque_sec * 3600)
     estimate = estimate_result.abs().apply(lambda x: f'{x / 1e4:.1f}万/小时' if x >= 1e4 else f'{x:.1f}/小时')
@@ -108,6 +107,7 @@ def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
     info_deque['exp'].append(user_info['修为'])
     info_deque['hp'].append(user_info['气血储备'])
     info_deque['mp'].append(user_info['魔法储备'])
+    info_deque['ll'].append(user_info['灵力'])
     info_deque['hm'].append(user_info['心魔'])
     stats, reward = get_fight_result(page)
     joblib.dump(info_deque, f"user_deque.joblib")
