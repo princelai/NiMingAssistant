@@ -22,7 +22,7 @@ class CityMap:
             for p in walk_path:
                 near_city = page.locator("div[class=\"can-move-map\"] > span")
                 for i in range(near_city.count()):
-                    if near_city.nth(i).inner_text() == p:
+                    if near_city.nth(i).inner_text().strip() == p:
                         near_city.nth(i).click()
                         break
 

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Tuple
 
 import joblib
+import numpy as np
 import pandas as pd
 from playwright.sync_api import Page
 
@@ -48,6 +49,15 @@ def get_fight_result(page: Page):
     return fight_stats, reward_items
 
 
+def format_string_num(s: str) -> str:
+    sign = np.sign(int(s))
+    num = abs(int(s))
+    if num >= 1e4:
+        return f'{sign * num / 1e4:.1f}万/小时'
+    else:
+        return f'{sign * num:.1f}/小时'
+
+
 def estimate_info(deq) -> Tuple[dict, dict]:
     # df = pd.DataFrame(joblib.load("user_deque.joblib"))
     df = pd.DataFrame(deq)
@@ -65,7 +75,7 @@ def estimate_info(deq) -> Tuple[dict, dict]:
     df_diff["ll"].fillna(df_diff.ll.mean(), inplace=True)
     deque_sec = (df_diff.index[-1] - df_diff.index[0]).total_seconds()
     estimate_result = (df_diff.sum() / deque_sec * 3600)
-    estimate = estimate_result.apply(lambda x: f'{x / 1e4:.1f}万/小时' if x >= 1e4 else f'{x:.1f}/小时')
+    estimate = estimate_result.apply(format_string_num)
     return estimate_result.to_dict(), estimate.to_dict()
 
 
