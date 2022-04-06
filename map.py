@@ -27,7 +27,7 @@ class CityMap:
                         break
 
                 DynLog.record_log(f"路过{p}")
-                page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=5000)
+                page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=10000)
                 page.wait_for_timeout(timeout=1000)
             DynLog.record_log("已到达指定地图")
 

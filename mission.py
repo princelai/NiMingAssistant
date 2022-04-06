@@ -157,14 +157,17 @@ def mission_xiangyao(page: Page, user_config, person_vars: UserVars):
                                 page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
                 if mission_monster in monster_list:
                     mission_city = p
+                    DynLog.record_log(f"妖兽在{p}")
                     break
                 else:
+                    DynLog.record_log(f"妖兽不在{p}，继续寻找", error=True)
                     continue
             # 战斗
             while True:
                 for tab in ("战斗日志", "地图场景"):
                     page.click(f"text={tab}")
                     page.wait_for_timeout(timeout=1000)
+                DynLog.record_log("准备和妖兽决战")
                 monster_list = [s.strip() for s in
                                 page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
                 monster_id = monster_list.index(mission_monster)
