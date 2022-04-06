@@ -179,9 +179,9 @@ def mission_xiangyao(page: Page, user_config, person_vars: UserVars):
                 # page.locator("text=当前第 1 轮").count()
                 try:
                     if j < 9:
-                        page.wait_for_selector("text=快去附近找找看!", timeout=20000)
+                        page.wait_for_selector("text=快去附近找找看!", timeout=30000)
                     else:
-                        page.wait_for_selector("text=完成[降妖]", timeout=20000)
+                        page.wait_for_selector("text=完成[降妖]", timeout=30000)
                 except Exception:
                     DynLog.record_log("没打过")
                     continue
