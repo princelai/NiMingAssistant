@@ -126,7 +126,7 @@ def guaji(page: Page, user_config, person_vars: UserVars):
         while True:
             if estimate1:
                 # cond = (estimate1['exp'] < 5e5) + (estimate1['hp'] < -3e5) + (estimate1['hm'] > 2e2)
-                cond = estimate1['hm'] > 2e2 or estimate1['ll'] < 1e4
+                cond = estimate1['hm'] > 2e2 or estimate1['ll'] < -1e4
             else:
                 cond = 0
             # page.locator("img[height=\"10px\"]").count()
