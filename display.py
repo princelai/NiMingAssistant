@@ -31,8 +31,9 @@ class ProgramInfo:
         match_time1 = re.search(r"(\d+)\sdays\s(\d+):(\d+)", str(program_time))
         time1_str = f"程序运行时间: {int(match_time1.group(1))}天{int(match_time1.group(2))}小时{int(match_time1.group(3))}分"
         info1 = Align.center(Text(time1_str, style="bold magenta", justify="center"))
+        # TODO(kevin): 每次更新时候增加版本号
         info2 = Text(
-            """Version:0.8.4  项目主页:https://github.com/princelai/NiMingAssistant""",
+            """Version:0.9.2  项目主页:https://github.com/princelai/NiMingAssistant""",
             justify="center",
         )
 

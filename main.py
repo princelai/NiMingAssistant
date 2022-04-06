@@ -6,8 +6,10 @@ from playwright.sync_api import Playwright, sync_playwright
 from rich.live import Live
 
 from display import DisplayLayout
-from func_common import mission_yaoling, mission_xunbao, mission_xiangyao, guaji
-from func_other import valid_config, UserVars
+from fight import guaji
+from info import UserVars
+from login import valid_config
+from mission import mission_yaoling, mission_xunbao, mission_xiangyao
 
 
 def cmd_args(conf="config.yml"):

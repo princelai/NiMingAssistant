@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import Tuple
 
 import joblib
 import numpy as np
@@ -14,31 +14,6 @@ class UserVars:
     def __init__(self):
         self.train_start_time: datetime = datetime.now()
         self.team_leader: str = ""
-
-
-def valid_config(c: dict) -> dict:
-    new_c = {}
-    if bool(c.get('login', {}).get("username")) & bool(c.get('login', {}).get("password")):
-        new_c['login'] = c.get('login')
-    else:
-        DynLog.record_log("未正确配置登录信息", error=True)
-        exit(1)
-    new_c['fight'] = {}
-    new_c['mission'] = {}
-    if (v1 := c.get('fight', {}).get("skill")) is not None:
-        new_c['fight'].update({"skill": v1})
-    else:
-        DynLog.record_log("未正确配置技能信息", error=True)
-        exit(1)
-    if (v2 := c.get('fight', {}).get("monster")) is None:
-        new_c['fight'].update({"monster": '陆地兽群'})
-    else:
-        new_c['fight'].update({"monster": v2})
-
-    new_c['fight'].update({"captain": c.get('fight', {}).get("captain")})
-    new_c['fight'].update({"fallback": c.get('fight', {}).get("fallback")})
-    new_c['mission'].update({"name": c.get('mission', {}).get("name")})
-    return new_c
 
 
 def get_user_info(page: Page) -> dict:
@@ -152,19 +127,3 @@ def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
 
     DisplayLayout.update_user_info(value=dd)
     return estimate1
-
-
-def auto_fight_on(page: Page, cycle=True):
-    page.click("text=战斗日志")
-    page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"普通攻击\"]", timeout=15000)
-
-    if cycle:
-        page.click("text=循环挑战")
-        page.wait_for_timeout(timeout=300)
-
-    auto_fight_box = page.locator(f"text=自动 ↓技能↓ >> input[type=\"checkbox\"]")
-    auto_fight_box.check()
-    page.wait_for_timeout(timeout=300)
-    page.click("text=地图场景")
-    page.wait_for_timeout(timeout=300)
-    DynLog.record_log("开启自动战斗成功")
