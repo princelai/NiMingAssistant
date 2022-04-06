@@ -7,4 +7,4 @@ fight:
   captain:
   fallback: False
 mission:
-  name:   # 目前有药灵、寻宝、降妖，配置了就是任务优先级最高
+  id:   # 1:药灵、2:降妖、3:寻宝，配置了就是任务优先级最高

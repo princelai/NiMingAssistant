@@ -68,6 +68,7 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
                     page.locator("button[type=\"button\"]:has-text(\"确认加入\")").click()
                     page.wait_for_selector(f'div[class=\"ant-card-body\"]:has-text(\"{fight_config.get("captain")}\")', timeout=1000)
                     DynLog.record_log(f'加入队长{fight_config.get("captain")}队伍')
+                    person_vars.team_leader = fight_config.get("captain")
                     auto_fight_on(page, cycle=False)
                 except Exception:
                     if fight_config.get("fallback"):
@@ -97,13 +98,14 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
             auto_fight_on(page)
             df_team = get_team_list(page)
             name = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"名称\"))").first.inner_text()
+            person_vars.team_leader = name
             if not df_team.empty and name in df_team.captain.values:
                 f = Path("password.bin")
                 if f.exists():
                     f.unlink()
                 df_team.loc[df_team.captain == name, "encryption"].iloc[0].hover()
                 page.wait_for_selector("text=队伍密令", timeout=1000)
-                joblib.dump(page.locator("text=队伍密令").inner_text().split(":")[1], "password.bin")
+                joblib.dump(page.locator("text=队伍密令").inner_text().split(":")[1], f.as_posix())
             else:
                 DynLog.record_log("未能成功创建队伍，重试", error=True)
                 continue
@@ -124,7 +126,7 @@ def guaji(page: Page, user_config, person_vars: UserVars):
         while True:
             if estimate1:
                 # cond = (estimate1['exp'] < 5e5) + (estimate1['hp'] < -3e5) + (estimate1['hm'] > 2e2)
-                cond = estimate1['hm'] > 2e2
+                cond = estimate1['hm'] > 2e2 or estimate1['ll'] < 1e4
             else:
                 cond = 0
             # page.locator("img[height=\"10px\"]").count()

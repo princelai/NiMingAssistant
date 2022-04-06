@@ -51,6 +51,7 @@ def get_fight_result(page: Page):
 def estimate_info(deq) -> Tuple[dict, dict]:
     # df = pd.DataFrame(joblib.load("user_deque.joblib"))
     df = pd.DataFrame(deq)
+    df.drop(columns="sl", inplace=True)
     df['time'] = pd.to_datetime(df.time)
     df.set_index('time', inplace=True)
     df = df.loc[datetime.now() - timedelta(minutes=20):datetime.now()]
@@ -64,7 +65,7 @@ def estimate_info(deq) -> Tuple[dict, dict]:
     df_diff["ll"].fillna(df_diff.ll.mean(), inplace=True)
     deque_sec = (df_diff.index[-1] - df_diff.index[0]).total_seconds()
     estimate_result = (df_diff.sum() / deque_sec * 3600)
-    estimate = estimate_result.abs().apply(lambda x: f'{x / 1e4:.1f}万/小时' if x >= 1e4 else f'{x:.1f}/小时')
+    estimate = estimate_result.apply(lambda x: f'{x / 1e4:.1f}万/小时' if x >= 1e4 else f'{x:.1f}/小时')
     return estimate_result.to_dict(), estimate.to_dict()
 
 
@@ -109,6 +110,7 @@ def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
     info_deque['mp'].append(user_info['魔法储备'])
     info_deque['ll'].append(user_info['灵力'])
     info_deque['hm'].append(user_info['心魔'])
+    info_deque['sl'].append(user_info['速力'])
     stats, reward = get_fight_result(page)
     joblib.dump(info_deque, f"user_deque.joblib")
     estimate1, estimate2 = estimate_info(info_deque)
@@ -117,8 +119,6 @@ def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
     match_time2 = re.search(r"(\d+)\sdays\s(\d+):(\d+)", str(train_time))
     time2_str = f"{int(match_time2.group(1))}天{int(match_time2.group(2))}小时{int(match_time2.group(3))}分"
 
-    if person_vars.team_leader == "自己建队":
-        person_vars.team_leader = user_info.get("名称", "")
     dd = {"team_info": {"leader": person_vars.team_leader, "num": page.locator("a:has-text(\"X\")").count(), "time": time2_str},
           "user_info": user_info,
           "fight_info": stats,

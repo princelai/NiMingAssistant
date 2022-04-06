@@ -24,7 +24,7 @@ def valid_config(c: dict) -> dict:
 
     new_c['fight'].update({"captain": c.get('fight', {}).get("captain")})
     new_c['fight'].update({"fallback": c.get('fight', {}).get("fallback")})
-    new_c['mission'].update({"name": c.get('mission', {}).get("name")})
+    new_c['mission'].update({"id": c.get('mission', {}).get("id")})
     return new_c
 
 

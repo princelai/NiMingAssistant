@@ -5,7 +5,7 @@ import yaml
 from playwright.sync_api import Playwright, sync_playwright
 from rich.live import Live
 
-from display import DisplayLayout
+from display import DisplayLayout, DynLog
 from fight import guaji
 from info import UserVars
 from login import valid_config
@@ -28,19 +28,15 @@ def dispatcher(browser, user_config):
         page.goto("https://game.nimingxx.com/login", timeout=8000)
     page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=5000)
 
-    if user_config['mission']['name'] == "药灵":
-        mission_yaoling(page, user_config, UserVars())
-    elif user_config['mission']['name'] == "寻宝":
-        mission_xunbao(page, user_config, UserVars())
-    elif user_config['mission']['name'] == "降妖":
-        mission_xiangyao(page, user_config, UserVars())
+    mission_id_map = {1: mission_yaoling, 2: mission_xiangyao, 3: mission_xunbao}
+    if user_config['mission']['id']:
+        mission_id_map.get(user_config['mission']['id'])(page, user_config, UserVars())
     else:
         guaji(page, user_config, UserVars())
 
-    try:
-        page.pause()
-    except Exception:
-        pass
+    DynLog.record_log("程序完成，10秒后自动退出")
+    page.wait_for_timeout(timeout=10000)
+    page.close()
     context.close()
 
 
@@ -55,7 +51,7 @@ def run(playwright: Playwright) -> None:
     # TODO(kevin):无头设置，记得每次检查一下是否为True
     browser = playwright.chromium.launch(headless=True)
 
-    with Live(DisplayLayout.my_layout, refresh_per_second=8, screen=True):
+    with Live(DisplayLayout.my_layout, refresh_per_second=6, screen=True):
         dispatcher(browser, user_config)
     browser.close()
 
