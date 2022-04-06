@@ -72,8 +72,8 @@ def login(page: Page, conf: dict):
         if tab == "活动":
             # 领取奖励
             page.wait_for_selector("button:has-text(\"领取维护补偿\")", timeout=2000)
-            if page.locator("button:has-text(\"签到\")").count() == 1:
-                page.locator("button:has-text(\"签到\")").click()
+            if page.locator("button:has-text(\"日日签\")").count() == 1:
+                page.locator("button:has-text(\"日日签\")").click()
                 page.wait_for_timeout(timeout=300)
             page.locator("button:has-text(\"领取维护补偿\")").click()
 
