@@ -49,7 +49,7 @@ def run(playwright: Playwright) -> None:
         f.unlink()
 
     # TODO(kevin):无头设置，记得每次检查一下是否为True
-    browser = playwright.chromium.launch(headless=False)
+    browser = playwright.chromium.launch(headless=True)
 
     with Live(DisplayLayout.my_layout, refresh_per_second=6, screen=True):
         dispatcher(browser, user_config)
