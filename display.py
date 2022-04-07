@@ -1,5 +1,4 @@
 import re
-import time
 from datetime import datetime
 
 import pandas as pd
@@ -7,7 +6,6 @@ from rich import box
 from rich.align import Align
 from rich.console import Group
 from rich.layout import Layout
-from rich.live import Live
 from rich.panel import Panel
 from rich.progress import Progress, TextColumn, SpinnerColumn, TaskID
 from rich.table import Table
@@ -137,31 +135,3 @@ class DisplayLayout:
     @classmethod
     def update_user_info(cls, value):
         cls.my_layout["user"].update(UserMainInfo(values=value))
-
-
-if __name__ == "__main__":
-    log_progress = Progress(SpinnerColumn(), TextColumn("{task.description}"))
-    my_layout = make_layout()
-    my_layout["info"].update(ProgramInfo())
-    my_layout["log"].update(Panel(log_progress, title="运行日志"))
-
-    dd = {"team_info": {"leader": "唐小冰", "num": 4, "time": "0天1小时2分"},
-          "user_info": {"经验条": "245.2%", "修为": 4567890, "名称": "散修220", "气血储备": 200000, "魔法储备": 300000, "心魔": 120},
-          "fight_info": {"累计胜利": 156, "累计败北": 1, "累计修为": 123455},
-          "reward_info": {"物品1": 14, "物品2": 3},
-          "estimate_info": {'exp': '232.0万/小时', 'hp': '1724.1/小时', 'mp': '9.1万/小时', 'hm': '0.0/小时'}}
-
-    with Live(my_layout, refresh_per_second=4, screen=True) as live:
-        my_layout["user"].update(UserMainInfo(values=dd))
-        for i in range(15):
-            task_id = log_progress.add_task("")
-            s = str(i) * 10
-            if i % 2:
-                log_progress.update(task_id, description=f"[red]{s}")
-            else:
-                log_progress.update(task_id, description=f"[green]{s}")
-            if i >= 1:
-                log_progress.update(task_id - 1, completed=100)
-            if i >= 20:
-                log_progress.update(task_id - 20, visible=False)
-            time.sleep(5)
