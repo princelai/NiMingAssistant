@@ -30,12 +30,12 @@ def get_user_info(page: Page) -> dict:
     d['心魔'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"心魔\"))").first.inner_text())
     d['速力'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"速力\"))").first.inner_text())
     d['灵力'] = int(re.search(r"总灵力\((\d+)\)", page.locator("text=总灵力").inner_text()).group(1))
-    if d['气血储备'] < 50000:
+    if d['气血储备'] < 70000:
         exchange_hp(page)
-    if d['魔法储备'] < 50000:
+    if d['魔法储备'] < 70000:
         exchange_mp(page)
-    if d['速力'] < 40:
-        exchange_sl(page, ling=10000)
+    if d['速力'] < 65:
+        exchange_sl(page)
     return d
 
 
@@ -79,7 +79,7 @@ def estimate_info(deq) -> Tuple[dict, dict]:
     return estimate_result.to_dict(), estimate.to_dict()
 
 
-def exchange_hp(page: Page, ling=5000):
+def exchange_hp(page: Page, ling=10000):
     DynLog.record_log("兑换一次气血")
     page.locator("text=总灵力").hover()
     page.wait_for_timeout(timeout=300)
@@ -90,7 +90,7 @@ def exchange_hp(page: Page, ling=5000):
     DynLog.record_log("继续挂机中")
 
 
-def exchange_mp(page: Page, ling=5000):
+def exchange_mp(page: Page, ling=10000):
     DynLog.record_log("兑换一次魔法")
     page.locator("text=总灵力").hover()
     page.wait_for_timeout(timeout=300)
@@ -101,7 +101,7 @@ def exchange_mp(page: Page, ling=5000):
     DynLog.record_log("继续挂机中")
 
 
-def exchange_sl(page: Page, ling=5000):
+def exchange_sl(page: Page, ling=10000):
     DynLog.record_log("兑换一次速力")
     page.locator("text=总灵力").hover()
     page.wait_for_timeout(timeout=300)

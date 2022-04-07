@@ -125,14 +125,12 @@ def guaji(page: Page, user_config, person_vars: UserVars):
         estimate1 = {}
         while True:
             if estimate1:
-                # cond = (estimate1['exp'] < 5e5) + (estimate1['hp'] < -3e5) + (estimate1['hm'] > 2e2)
-                cond = estimate1['hm'] > 2e2 or estimate1['ll'] < -1e4
+                cond = estimate1['hm'] > 1e3
             else:
                 cond = 0
-            # page.locator("img[height=\"10px\"]").count()
             if (page.locator("div[role=\"alert\"]:has-text(\"你已掉线...\")").count() >= 1) or (
                     page.locator("a:has-text(\"X\")").count() == 0) or cond:
-                DynLog.record_log("程序主动重启", error=True)
+                DynLog.record_log(f"程序主动重启,{cond}", error=True)
                 refresh_direct(page)
                 break
             estimate1 = update_display_info(page, info_deque, person_vars)
