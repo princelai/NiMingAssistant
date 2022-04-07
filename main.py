@@ -26,7 +26,7 @@ def dispatcher(browser, user_config):
     page = context.new_page()
     with page.expect_navigation(url="https://game.nimingxx.com/login", timeout=8000):
         page.goto("https://game.nimingxx.com/login", timeout=8000)
-    page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=5000)
+    page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=10000)
 
     mission_id_map = {1: mission_yaoling, 2: mission_xiangyao, 3: mission_xunbao}
     if user_config['mission']['id']:
@@ -49,7 +49,7 @@ def run(playwright: Playwright) -> None:
         f.unlink()
 
     # TODO(kevin):无头设置，记得每次检查一下是否为True
-    browser = playwright.chromium.launch(headless=True)
+    browser = playwright.chromium.launch(headless=False)
 
     with Live(DisplayLayout.my_layout, refresh_per_second=6, screen=True):
         dispatcher(browser, user_config)

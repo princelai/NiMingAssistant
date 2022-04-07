@@ -32,7 +32,7 @@ def refresh_direct(page: Page):
     while True:
         try:
             with page.expect_navigation(url="https://game.nimingxx.com/login"):
-                page.reload(timeout=3000)
+                page.reload(timeout=5000)
         except Exception:
             DynLog.record_log("页面重载失败，继续重试", error=True)
             continue
