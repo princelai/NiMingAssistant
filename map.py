@@ -53,14 +53,13 @@ class CityMap:
             else:
                 monster = select["怪物名"].to_list()[0]
                 target_map = select["地点"].to_list()[0]
+
         if not monster and fight_config.get('monster'):
             select = cls.df.loc[cls.df["怪物名"] == fight_config.get('monster')].tail(1)
             monster = select["怪物名"].to_list()[0]
             target_map = select["地点"].to_list()[0]
             if fight_config.get('monster') != monster:
                 DynLog.record_log("配置的怪物和物品表中的怪物未匹配，请检查，本次以物品表为准", error=True)
-        else:
-            DynLog.record_log("配置的怪物未能找到", error=True)
-            exit(1)
+
         cls.move_to_map(page, target_map)
         return monster
