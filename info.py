@@ -14,6 +14,7 @@ class UserVars:
     def __init__(self):
         self.train_start_time: datetime = datetime.now()
         self.team_leader: str = ""
+        self.team_password: str = ""
 
 
 def get_user_info(page: Page) -> dict:
@@ -126,7 +127,8 @@ def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
     match_time2 = re.search(r"(\d+)\sdays\s(\d+):(\d+)", str(train_time))
     time2_str = f"{int(match_time2.group(1))}天{int(match_time2.group(2))}小时{int(match_time2.group(3))}分"
 
-    dd = {"team_info": {"leader": person_vars.team_leader, "num": page.locator("a:has-text(\"X\")").count(), "time": time2_str},
+    dd = {"team_info": {"leader": person_vars.team_leader, "num": page.locator("a:has-text(\"X\")").count(),
+                        "passwd": person_vars.team_password, "time": time2_str},
           "user_info": user_info,
           "fight_info": stats,
           "reward_info": reward,

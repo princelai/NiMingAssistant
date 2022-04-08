@@ -105,7 +105,9 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
                     f.unlink()
                 df_team.loc[df_team.captain == name, "encryption"].iloc[0].hover()
                 page.wait_for_selector("text=队伍密令", timeout=1000)
-                joblib.dump(page.locator("text=队伍密令").inner_text().split(":")[1], f.as_posix())
+                passwd = page.locator("text=队伍密令").inner_text().split(":")[1]
+                joblib.dump(passwd, f.as_posix())
+                person_vars.team_password = passwd
             else:
                 DynLog.record_log("未能成功创建队伍，重试", error=True)
                 continue
@@ -118,7 +120,8 @@ def guaji(page: Page, user_config, person_vars: UserVars):
         if page.url.endswith('login'):
             login(page, user_config)
 
-        CityMap.map_navigate(page, user_config.get("fight"))
+        monster = CityMap.map_navigate(page, user_config.get("fight"))
+        user_config["fight"]["monster"] = monster
         fight(page, user_config.get("fight"), person_vars)
         info_deque = defaultdict(partial(deque, maxlen=128))
         person_vars.train_start_time = datetime.now()

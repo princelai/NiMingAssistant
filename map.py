@@ -1,4 +1,7 @@
+from typing import Optional
+
 import networkx as nx
+import pandas as pd
 from playwright.sync_api import Page
 
 from display import DynLog
@@ -6,6 +9,8 @@ from display import DynLog
 
 class CityMap:
     g = nx.read_gml('map_luofan.gml')
+    df = pd.read_csv("material_map.csv")
+    df.sort_values("等级", inplace=True)
 
     @classmethod
     def neighbor_city(cls, center) -> list:
@@ -27,25 +32,35 @@ class CityMap:
                         break
 
                 DynLog.record_log(f"路过{p}")
-                page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=10000)
-                page.wait_for_timeout(timeout=1000)
+                try:
+                    page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=10000)
+                except Exception:
+                    DynLog.record_log(f'错误，等待出现{p}, 变量{page.locator("text=当前地图").inner_text()}', error=True)
+                    page.wait_for_timeout(timeout=60000)
+                    exit(1)
+                page.wait_for_timeout(timeout=2000)
             DynLog.record_log("已到达指定地图")
 
     @classmethod
-    def map_navigate(cls, page: Page, fight_config: dict):
-        monster_map = {"无极峰": {"无极峰兽群(70)", "凤爪雪狼群(70)"},
-                       "云天山峰": {"珍珠妖鹿群(65)", "开灵兽群(50)", "云峰灵兽群(55)", "赤地魔蝎群(60)"},
-                       "落樱山脉": {"落樱灵兽群(45)", "飞羽兽群(40)"},
-                       "通天道": {"钻地兽群(35)", "陆地兽群(35)", "通天灵兽群(30)"},
-                       "碧炎山脉": {"焱炎兽群(21)"},
-                       "炽焰火山": {"山火灵兽群(25)"},
-                       "冰莲青湖": {"冰莲灵兽群(31)"}}
-        target_map = ""
-        for k, v in monster_map.items():
-            for m in v:
-                if m.startswith(fight_config.get('monster')):
-                    target_map = k
-        if not bool(target_map):
+    def map_navigate(cls, page: Page, fight_config: dict) -> Optional[str]:
+        monster = None
+        target_map = None
+        if fight_config.get('material'):
+            select = cls.df.loc[cls.df["掉落"] == fight_config.get('material')].tail(1)
+            if select.empty:
+                monster = None
+                target_map = None
+            else:
+                monster = select["怪物名"].to_list()[0]
+                target_map = select["地点"].to_list()[0]
+        if not monster and fight_config.get('monster'):
+            select = cls.df.loc[cls.df["怪物名"] == fight_config.get('monster')].tail(1)
+            monster = select["怪物名"].to_list()[0]
+            target_map = select["地点"].to_list()[0]
+            if fight_config.get('monster') != monster:
+                DynLog.record_log("配置的怪物和物品表中的怪物未匹配，请检查，本次以物品表为准", error=True)
+        else:
             DynLog.record_log("配置的怪物未能找到", error=True)
             exit(1)
         cls.move_to_map(page, target_map)
+        return monster

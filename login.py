@@ -22,6 +22,7 @@ def valid_config(c: dict) -> dict:
     else:
         new_c['fight'].update({"monster": v2})
 
+    new_c['fight'].update({"material": c.get('fight', {}).get("material")})
     new_c['fight'].update({"captain": c.get('fight', {}).get("captain")})
     new_c['fight'].update({"fallback": c.get('fight', {}).get("fallback")})
     new_c['mission'].update({"id": c.get('mission', {}).get("id")})
@@ -70,7 +71,6 @@ def login(page: Page, conf: dict):
         page.click(f"text={tab}")
         page.wait_for_timeout(timeout=500)
         if tab == "活动":
-            # 领取奖励
             page.wait_for_selector("button:has-text(\"领取维护补偿\")", timeout=2000)
             if page.locator("button:has-text(\"日日签\")").count() == 1:
                 page.locator("button:has-text(\"日日签\")").click()
@@ -97,7 +97,7 @@ def login(page: Page, conf: dict):
 
     page.click("button:has-text(\"保 存\")")
     page.wait_for_selector("text=配置已生效", timeout=2000)
-    # page.wait_for_timeout(timeout=300)
+    page.wait_for_timeout(timeout=300)
 
     # 设置自动技能
     page.click("text=修行")

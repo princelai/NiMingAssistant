@@ -56,7 +56,11 @@ def mission_yaoling(page: Page, user_config, person_vars: UserVars):
 
         mission.click()
         DynLog.record_log("飞过去")
+        for tab in ("战斗日志", "地图场景"):
+            page.click(f"text={tab}")
+            page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
+        DynLog.record_log("任务传送成功")
         # 战斗
         while True:
             for tab in ("战斗日志", "地图场景"):
@@ -145,8 +149,11 @@ def mission_xiangyao(page: Page, user_config, person_vars: UserVars):
 
         mission.click()
         DynLog.record_log("飞过去")
-        # 这里应该是等待地图
+        for tab in ("战斗日志", "地图场景"):
+            page.click(f"text={tab}")
+            page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
+        DynLog.record_log("任务传送成功")
         for j in range(10):
             for p in CityMap.neighbor_city(mission_city):
                 CityMap.move_to_map(page, p)
@@ -248,7 +255,11 @@ def mission_xunbao(page: Page, user_config, person_vars: UserVars):
 
         mission.click()
         DynLog.record_log("飞过去")
+        for tab in ("战斗日志", "地图场景"):
+            page.click(f"text={tab}")
+            page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
+        DynLog.record_log("任务传送成功")
         # 战斗
         while True:
             for tab in ("战斗日志", "地图场景"):
