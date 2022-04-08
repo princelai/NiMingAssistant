@@ -33,9 +33,10 @@ class CityMap:
 
                 DynLog.record_log(f"路过{p}")
                 try:
-                    page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=10000)
+                    # page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=10000)
+                    page.wait_for_timeout(timeout=3000)
                 except Exception:
-                    DynLog.record_log(f'错误，等待出现{p}, 变量{page.locator("text=当前地图").inner_text()}', error=True)
+                    DynLog.record_log(f'等待{p}, 变量{page.locator("text=当前地图").inner_text()}', error=True)
                     page.wait_for_timeout(timeout=60000)
                     exit(1)
                 page.wait_for_timeout(timeout=2000)

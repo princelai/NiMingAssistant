@@ -58,7 +58,7 @@ def mission_yaoling(page: Page, user_config, person_vars: UserVars):
         DynLog.record_log("飞过去")
         for tab in ("战斗日志", "地图场景"):
             page.click(f"text={tab}")
-            page.wait_for_timeout(timeout=500)
+            page.wait_for_timeout(timeout=1000)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         DynLog.record_log("任务传送成功")
         # 战斗

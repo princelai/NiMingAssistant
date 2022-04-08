@@ -87,7 +87,7 @@ def exchange_hp(page: Page, ling=10000):
     page.locator("input[max=\"100000\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
     page.locator("a:has-text(\"聚灵\")").click()
-    DynLog.record_log("继续挂机中")
+    DynLog.record_log("继续")
 
 
 def exchange_mp(page: Page, ling=10000):
@@ -97,7 +97,7 @@ def exchange_mp(page: Page, ling=10000):
     page.locator("input[max=\"100000\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
     page.locator("a:has-text(\"凝元\")").click()
-    DynLog.record_log("继续挂机中")
+    DynLog.record_log("继续")
 
 
 def exchange_sl(page: Page, ling=10000):
@@ -107,7 +107,7 @@ def exchange_sl(page: Page, ling=10000):
     page.locator("input[max=\"100000\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
     page.locator("a:has-text(\"炼神\")").click()
-    DynLog.record_log("继续挂机中")
+    DynLog.record_log("继续")
 
 
 def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
