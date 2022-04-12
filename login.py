@@ -1,3 +1,5 @@
+from random import choices
+
 from playwright.sync_api import Page
 
 from display import DynLog
@@ -42,6 +44,20 @@ def refresh_direct(page: Page):
             break
 
 
+def switch_tab_to(page, tab, num=2, timeout=1000):
+    num = 2 if num <= 1 else num
+    tabs = ("储物戒", "地图场景", "活动", "修行", "战斗日志", "分身", "灵宠", "宗门", "拍卖行", "其他日志")
+    for tab in choices(tabs, k=num) + [tab]:
+        page.click(f"text={tab}")
+        page.wait_for_timeout(timeout=timeout)
+        if tab == "活动":
+            page.wait_for_selector("button:has-text(\"领取维护补偿\")", timeout=2000)
+            if page.locator("button:has-text(\"日日签\")").count() == 1:
+                page.locator("button:has-text(\"日日签\")").click()
+                page.wait_for_timeout(timeout=500)
+            page.locator("button:has-text(\"领取维护补偿\")").click()
+
+
 def login(page: Page, conf: dict):
     DynLog.record_log("正在自动登录")
     while True:
@@ -67,15 +83,7 @@ def login(page: Page, conf: dict):
 
     # 初始化队伍和战斗
     DynLog.record_log("正在初始化界面")
-    for tab in ("储物戒", "地图场景", "活动", "修行", "地图场景"):
-        page.click(f"text={tab}")
-        page.wait_for_timeout(timeout=500)
-        if tab == "活动":
-            page.wait_for_selector("button:has-text(\"领取维护补偿\")", timeout=2000)
-            if page.locator("button:has-text(\"日日签\")").count() == 1:
-                page.locator("button:has-text(\"日日签\")").click()
-                page.wait_for_timeout(timeout=300)
-            page.locator("button:has-text(\"领取维护补偿\")").click()
+    switch_tab_to(page, tab="地图场景", num=3, timeout=500)
 
     DynLog.record_log("正在关闭耗费资源的配置")
     # 关闭日志记录

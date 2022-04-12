@@ -7,7 +7,7 @@ from playwright.sync_api import Page
 from display import DynLog
 from fight import auto_fight_on
 from info import UserVars, update_display_info
-from login import login
+from login import login, switch_tab_to
 from map import CityMap
 
 
@@ -56,16 +56,12 @@ def mission_yaoling(page: Page, user_config, person_vars: UserVars):
 
         mission.click()
         DynLog.record_log("飞过去")
-        for tab in ("战斗日志", "地图场景"):
-            page.click(f"text={tab}")
-            page.wait_for_timeout(timeout=1000)
+        switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         DynLog.record_log("任务传送成功")
         # 战斗
         while True:
-            for tab in ("战斗日志", "地图场景"):
-                page.click(f"text={tab}")
-                page.wait_for_timeout(timeout=1000)
+            switch_tab_to(page, tab="地图场景", num=2, timeout=2000)
             monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
             monster_id = monster_list.index(mission_monster)
             page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
@@ -76,9 +72,7 @@ def mission_yaoling(page: Page, user_config, person_vars: UserVars):
                 auto_fight = True
 
             while True:
-                for tab in ("战斗日志", "地图场景"):
-                    page.click(f"text={tab}")
-                    page.wait_for_timeout(timeout=1000)
+                switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
                 if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
                     break
                 else:
@@ -107,9 +101,7 @@ def mission_xiangyao(page: Page, user_config, person_vars: UserVars):
 
         DynLog.record_log("接取降妖任务")
         page.wait_for_selector("button:has-text(\"凌中天\")", timeout=3000)
-        for tab in ("战斗日志", "地图场景"):
-            page.click(f"text={tab}")
-            page.wait_for_timeout(timeout=500)
+        switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
 
         if page.locator("a:has-text(\"X\")").count() == 0:
             page.click("text=需要密令")
@@ -149,17 +141,13 @@ def mission_xiangyao(page: Page, user_config, person_vars: UserVars):
 
         mission.click()
         DynLog.record_log("飞过去")
-        for tab in ("战斗日志", "地图场景"):
-            page.click(f"text={tab}")
-            page.wait_for_timeout(timeout=500)
+        switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         DynLog.record_log("任务传送成功")
         for j in range(10):
             for p in CityMap.neighbor_city(mission_city):
                 CityMap.move_to_map(page, p)
-                for tab in ("战斗日志", "地图场景"):
-                    page.click(f"text={tab}")
-                    page.wait_for_timeout(timeout=1000)
+                switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
                 monster_list = [s.strip() for s in
                                 page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
                 if mission_monster in monster_list:
@@ -171,9 +159,7 @@ def mission_xiangyao(page: Page, user_config, person_vars: UserVars):
                     continue
             # 战斗
             while True:
-                for tab in ("战斗日志", "地图场景"):
-                    page.click(f"text={tab}")
-                    page.wait_for_timeout(timeout=1000)
+                switch_tab_to(page, tab="地图场景", num=2, timeout=2000)
                 DynLog.record_log("准备和妖兽决战")
                 monster_list = [s.strip() for s in
                                 page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
@@ -197,9 +183,7 @@ def mission_xiangyao(page: Page, user_config, person_vars: UserVars):
                     continue
 
                 update_display_info(page, info_deque, person_vars)
-                for tab in ("战斗日志", "地图场景"):
-                    page.click(f"text={tab}")
-                    page.wait_for_timeout(timeout=500)
+                switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
 
                 page.locator("i[class=\"el-icon-refresh\"]").click()
                 page.wait_for_timeout(timeout=500)
