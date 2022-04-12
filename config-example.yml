@@ -2,10 +2,10 @@ login:
   username:  # 用户名
   password:  # 登陆密码
 fight:
-  material:
+  material: # 想要打的物品，优先级高于怪物，可以查自带的material_map.csv文件
   monster: 钻地兽群 # 要打的怪物，默认是陆地兽群
   skill: 落叶萧萧 # 必须指定技能
-  captain:
-  fallback: False
+  captain: # 加入别人的队伍，这个队长必须是自己的另一个程序，因为密码会作为缓存文件保存
+  fallback: False # 没找到队长是否回落到自己组队打怪
 mission:
   id:   # 1:药灵、2:降妖、3:寻宝，配置了就是任务优先级最高
