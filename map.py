@@ -18,7 +18,7 @@ class CityMap:
 
     @classmethod
     def move_to_map(cls, page: Page, target_map: str) -> None:
-        page.wait_for_timeout(timeout=1500)
+        page.wait_for_timeout(timeout=1000)
         curr_map = page.locator("text=当前地图").inner_text()
         curr_map = curr_map.split(":")[1].strip()
         if curr_map != target_map:
@@ -32,13 +32,13 @@ class CityMap:
                         break
 
                 DynLog.record_log(f"路过{p}")
-                try:
-                    # page.wait_for_selector(f"text=\"当前地图:{p}\"", timeout=10000)
-                    page.wait_for_timeout(timeout=2500)
-                except Exception:
-                    DynLog.record_log(f'等待{p}, 变量{page.locator("text=当前地图").inner_text()}', error=True)
-                    page.wait_for_timeout(timeout=60000)
-                    exit(1)
+                for _ in range(6):
+                    near_city = page.locator("div[class=\"can-move-map\"] > span")
+                    if set(cls.g.neighbors(p)) == set(near_city.all_inner_texts()):
+                        break
+                    else:
+                        page.wait_for_timeout(timeout=500)
+                        continue
             DynLog.record_log("已到达指定地图")
 
     @classmethod

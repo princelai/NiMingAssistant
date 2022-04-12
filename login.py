@@ -44,7 +44,7 @@ def refresh_direct(page: Page):
             break
 
 
-def switch_tab_to(page, tab, num=2, timeout=1000):
+def switch_tab_to(page, tab, num=2, timeout=500):
     num = 2 if num <= 1 else num
     tabs = ("储物戒", "地图场景", "活动", "修行", "战斗日志", "分身", "灵宠", "宗门", "拍卖行", "其他日志")
     for tab in choices(tabs, k=num) + [tab]:
