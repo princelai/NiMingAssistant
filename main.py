@@ -9,7 +9,7 @@ from display import DisplayLayout, DynLog
 from fight import guaji
 from info import UserVars
 from login import valid_config
-from mission import YaoLing, mission_xunbao, XiangYao
+from mission import YaoLing, XiangYao
 
 
 def cmd_args(conf="config.yml"):
@@ -28,9 +28,9 @@ def dispatcher(browser, user_config):
         page.goto("https://game.nimingxx.com/login", timeout=8000)
     page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=10000)
 
-    mission_id_map = {1: YaoLing.mission_yaoling, 2: XiangYao.mission_xiangyao, 3: mission_xunbao}
+    mission_id_map = {1: YaoLing.run, 2: XiangYao.run}
     if user_config['mission']['id']:
-        mission_id_map.get(user_config['mission']['id'])(page, user_config, UserVars())
+        mission_id_map.get(user_config['mission']['id'])(page, user_config)
     else:
         guaji(page, user_config, UserVars())
 
