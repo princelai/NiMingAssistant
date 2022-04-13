@@ -11,7 +11,7 @@ from playwright.sync_api import Page
 
 from display import DynLog
 from info import UserVars, update_display_info
-from login import login, refresh_direct
+from login import login, refresh_direct, switch_tab_to
 from map import CityMap
 
 
@@ -34,7 +34,7 @@ def get_team_list(page: Page) -> DataFrame:
 
 def auto_fight_on(page: Page, cycle=True):
     page.click("text=战斗日志")
-    page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"普通攻击\"]", timeout=15000)
+    page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"普通攻击\"]", timeout=10000)
 
     if cycle:
         page.click("text=循环挑战")
@@ -49,10 +49,8 @@ def auto_fight_on(page: Page, cycle=True):
 
 
 def fight(page: Page, fight_config: dict, person_vars: UserVars):
-    DynLog.record_log("正在开启战斗")
-    for tab in ("储物戒", "地图场景"):
-        page.click(f"text={tab}")
-        page.wait_for_timeout(timeout=1000)
+    DynLog.record_log("准备战斗")
+    switch_tab_to(page, tab="地图场景", num=2)
     page.click("button:has-text(\"刷新列表\")")
 
     while True:
@@ -92,9 +90,10 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
             page.click("button:has-text(\"创建队伍\")")
             page.wait_for_selector("a:has-text(\"X\")", timeout=1000)
             person_vars.team_leader = "自己建队"
-            monster_list = [s.strip() for s in page.locator(f"span[class=\"scene-name\"]:above(:has-text(\"附近NPC\"))").all_inner_texts()]
+            battle_div = page.locator(f"div[class=\"el-row\"]:above(:has-text(\"附近NPC\")):right-of(:has-text(\"附近灵兽\"))")
+            monster_list = [s.strip() for s in battle_div.locator("span[class=\"scene-name\"]").all_inner_texts()]
             monster_id = monster_list.index(fight_config.get("monster"))
-            page.locator(f"img[title=\"挑战\"]:above(:has-text(\"附近NPC\"))").nth(monster_id).click()
+            battle_div.locator("img[title=\"挑战\"]").nth(monster_id).click()
             auto_fight_on(page)
             df_team = get_team_list(page)
             name = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"名称\"))").first.inner_text()
