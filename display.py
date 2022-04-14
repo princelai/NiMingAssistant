@@ -31,7 +31,7 @@ class ProgramInfo:
         info1 = Align.center(Text(time1_str, style="bold magenta", justify="center"))
         # TODO(kevin): 每次更新时候增加版本号
         info2 = Text(
-            """Version:0.9.7  项目主页:https://github.com/princelai/NiMingAssistant""",
+            """Version:0.9.9  项目主页:https://github.com/princelai/NiMingAssistant""",
             justify="center",
         )
 
