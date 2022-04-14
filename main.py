@@ -29,7 +29,7 @@ def dispatcher(browser, user_config):
         page.goto("https://game.nimingxx.com/login", timeout=8000)
     page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=10000)
 
-    mission_id_map: dict[int, Callable[[Page, dict], None]] = {1: YaoLing.run, 2: XiangYao.run, 3: XunBao}
+    mission_id_map: dict[int, Callable[[Page, dict], None]] = {1: YaoLing.run, 2: XiangYao.run, 3: XunBao.run}
     if user_config['mission']['id']:
         mission_id_map.get(user_config['mission']['id'])(page, user_config)
     else:
