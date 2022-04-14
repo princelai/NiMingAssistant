@@ -124,8 +124,8 @@ class DynLog:
             cls.log_progress.update(task_id, description=f"[green]{s}", dt=datetime.now().strftime("%H:%M:%S"))
         if task_id >= 1:
             cls.log_progress.update(TaskID(task_id - 1), completed=100)
-        if task_id >= 20:
-            cls.log_progress.update(TaskID(task_id - 20), visible=False)
+        if task_id >= 22:
+            cls.log_progress.update(TaskID(task_id - 22), visible=False)
 
 
 class DisplayLayout:
