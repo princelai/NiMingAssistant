@@ -22,7 +22,7 @@ class CityMap:
         curr_map = page.locator("text=当前地图").inner_text()
         curr_map = curr_map.split(":")[1].strip()
         if curr_map != target_map:
-            DynLog.record_log(f"正在寻路去往{target_map}")
+            DynLog.record_log(f"寻路去往{target_map}")
             walk_path = nx.shortest_path(cls.g, curr_map, target_map)[1:]
             for p in walk_path:
                 near_city = page.locator("div[class=\"can-move-map\"] > span")
@@ -39,7 +39,7 @@ class CityMap:
                     else:
                         page.wait_for_timeout(timeout=500)
                         continue
-            DynLog.record_log("已到达指定地图")
+            DynLog.record_log(f"已到达{target_map}")
 
     @classmethod
     def map_navigate(cls, page: Page, fight_config: dict) -> Optional[str]:
