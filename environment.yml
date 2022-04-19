@@ -4,6 +4,8 @@ channels:
   - pytorch
   - dglteam
   - numba
+  - menpo
+  - Paddle
   - conda-forge
   - defaults
 dependencies:
@@ -64,9 +66,9 @@ dependencies:
   - openssl=3.0.2=h166bdaf_1
   - packaging=21.3=pyhd8ed1ab_0
   - pandas=1.4.2=py39h1832856_1
-  - pillow=9.1.0=py39hae2aec6_0
+  - pillow=9.1.0=py39hae2aec6_2
   - pip=22.0.4=pyhd8ed1ab_0
-  - playwright=v1.20.1=py39_0
+  - playwright=v1.21.0=py39_0
   - pthread-stubs=0.4=h36c2ea0_1001
   - pyee=8.1.0=pyhd8ed1ab_0
   - pygments=2.11.2=pyhd8ed1ab_0
@@ -84,7 +86,7 @@ dependencies:
   - sqlite=3.38.2=h4ff8645_0
   - termcolor=1.1.0=py_2
   - tk=8.6.12=h27826a3_0
-  - typing_extensions=4.1.1=pyha770c72_0
+  - typing_extensions=4.2.0=pyha770c72_0
   - tzdata=2022a=h191b570_0
   - unicodedata2=14.0.0=py39hb9d737c_1
   - websockets=10.1=py39h3811e60_0

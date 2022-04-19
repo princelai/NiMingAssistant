@@ -1,5 +1,5 @@
 fire==0.4.0
-playwright==v1.20.1
+playwright==v1.21.0
 networkx==2.8
 pyyaml==6.0
 loguru==0.6.0
