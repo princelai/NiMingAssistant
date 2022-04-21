@@ -87,9 +87,9 @@ def login(page: Page, conf: dict):
 
     DynLog.record_log("正在关闭耗费资源的配置")
     # 关闭日志记录
-    if (off_log_switch := page.locator("div[role=\"switch\"]")).get_attribute('aria-checked') != 'true':
-        off_log_switch.locator("span").click()
-        page.wait_for_timeout(timeout=300)
+    # if (off_log_switch := page.locator("div[role=\"switch\"]")).get_attribute('aria-checked') != 'true':
+    #     off_log_switch.locator("span").click()
+    #     page.wait_for_timeout(timeout=300)
 
     page.locator("svg[data-icon=\"setting\"]").first.click()
     # 关闭自动跳转战斗
