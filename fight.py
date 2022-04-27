@@ -32,13 +32,19 @@ def get_team_list(page: Page) -> DataFrame:
     return df
 
 
-def auto_fight_on(page: Page, cycle=True):
+def auto_fight_on(page: Page, fight_config: dict, cycle=True):
     page.click("text=战斗日志")
     page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"普通攻击\"]", timeout=10000)
 
     if cycle:
         page.click("text=循环挑战")
         page.wait_for_timeout(timeout=300)
+
+    skill_name = fight_config.get("skill")
+    page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"{skill_name}\"]", timeout=3000)
+    skill = page.locator(f"div[class=\"skill-bar\"] > div > img[alt=\"{skill_name}\"]")
+    if skill.count() == 1:
+        skill.click()
 
     auto_fight_box = page.locator(f"text=自动 ↓技能↓ >> input[type=\"checkbox\"]")
     auto_fight_box.check()
@@ -67,7 +73,7 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
                     page.wait_for_selector(f'div[class=\"ant-card-body\"]:has-text(\"{fight_config.get("captain")}\")', timeout=1000)
                     DynLog.record_log(f'加入队长{fight_config.get("captain")}队伍')
                     person_vars.team_leader = fight_config.get("captain")
-                    auto_fight_on(page, cycle=False)
+                    auto_fight_on(page, fight_config, cycle=False)
                 except Exception:
                     if fight_config.get("fallback"):
                         fight_config["captain"] = None
@@ -94,7 +100,7 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
             monster_list = [s.strip() for s in battle_div.locator("span[class=\"scene-name\"]").all_inner_texts()]
             monster_id = monster_list.index(fight_config.get("monster"))
             battle_div.locator("img[title=\"挑战\"]").nth(monster_id).click()
-            auto_fight_on(page)
+            auto_fight_on(page, fight_config)
             df_team = get_team_list(page)
             name = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"名称\"))").first.inner_text()
             person_vars.team_leader = name

@@ -48,7 +48,7 @@ class YaoLing:
         return True
 
     @classmethod
-    def mission_do(cls, page: Page, i):
+    def mission_do(cls, page: Page, fight_config: dict, i):
         mission = page.locator("text=-寻找药灵")
         mission.hover()
         page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
@@ -71,7 +71,7 @@ class YaoLing:
 
             # 自动战斗
             if not cls.auto_fight:
-                auto_fight_on(page, cycle=False)
+                auto_fight_on(page, fight_config, cycle=False)
                 cls.auto_fight = True
 
             # TODO(kevin): 更智能的判断结束
@@ -105,9 +105,9 @@ class YaoLing:
                     continue
                 elif success is None:
                     break
-                cls.mission_do(page, i)
+                cls.mission_do(page, user_config.get('fight'), i)
             else:
-                cls.mission_do(page, i)
+                cls.mission_do(page, user_config.get('fight'), i)
         DynLog.record_log("任务完成，请手动退出")
 
 
@@ -156,7 +156,7 @@ class XiangYao:
         return True
 
     @classmethod
-    def mission_do(cls, page: Page, i):
+    def mission_do(cls, page: Page, fight_config: dict, i):
         mission = page.locator("text=-降妖")
         mission.hover()
         page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
@@ -194,7 +194,7 @@ class XiangYao:
 
                 # 自动战斗
                 if not cls.auto_fight:
-                    auto_fight_on(page, cycle=False)
+                    auto_fight_on(page, fight_config, cycle=False)
                     cls.auto_fight = True
 
                 try:
@@ -230,9 +230,9 @@ class XiangYao:
                     continue
                 elif success is None:
                     break
-                cls.mission_do(page, i)
+                cls.mission_do(page, user_config.get('fight'), i)
             else:
-                cls.mission_do(page, i)
+                cls.mission_do(page, user_config.get('fight'), i)
         DynLog.record_log("任务完成，请手动退出")
 
 
@@ -272,7 +272,7 @@ class XunBao:
         return True
 
     @classmethod
-    def mission_do(cls, page: Page, i):
+    def mission_do(cls, page: Page, fight_config: dict, i):
         mission = page.locator("text=-寻宝")
         mission.hover()
         page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
@@ -295,7 +295,7 @@ class XunBao:
 
             # 自动战斗
             if not cls.auto_fight:
-                auto_fight_on(page, cycle=False)
+                auto_fight_on(page, fight_config, cycle=False)
                 cls.auto_fight = True
 
             # TODO(kevin): 更智能的判断结束
@@ -329,7 +329,7 @@ class XunBao:
                     continue
                 elif success is None:
                     break
-                cls.mission_do(page, i)
+                cls.mission_do(page, user_config.get('fight'), i)
             else:
-                cls.mission_do(page, i)
+                cls.mission_do(page, user_config.get('fight'), i)
         DynLog.record_log("任务完成，请手动退出")
