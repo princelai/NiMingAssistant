@@ -46,7 +46,7 @@ def refresh_direct(page: Page):
 
 def switch_tab_to(page, tab, num=2, timeout=500):
     num = 2 if num <= 1 else num
-    tabs = ("储物戒", "地图场景", "活动", "修行", "战斗日志", "分身",  "宗门", "拍卖行", "其他日志")
+    tabs = ("储物戒", "地图场景", "活动", "修行", "战斗日志", "分身",  "宗门",  "其他日志")
     for tab in choices(tabs, k=num) + [tab]:
         page.click(f"text={tab}")
         page.wait_for_timeout(timeout=timeout)
@@ -108,16 +108,16 @@ def login(page: Page, conf: dict):
     page.wait_for_timeout(timeout=300)
 
     # 设置自动技能
-    page.click("text=修行")
-    page.wait_for_timeout(timeout=500)
-    for tab in ("技能", "炼丹", "合成", "技能"):
-        page.click(f"div[role=\"tab\"]:text(\"{tab}\")")
-        page.wait_for_timeout(timeout=300)
-    page.locator("input[type=\"text\"]:below(:has-text(\"已领悟技能\"))").click()
-    page.wait_for_timeout(timeout=300)
-    page.locator(f'div[class=\"el-scrollbar\"] div ul li:has-text(\"{conf.get("fight").get("skill")}\")').click()
-    page.wait_for_timeout(timeout=300)
-    page.locator("button[type=button]:has-text(\"保存\")").click()
-    page.wait_for_timeout(timeout=300)
-    page.click("text=地图场景")
-    page.wait_for_timeout(timeout=300)
+    # page.click("text=修行")
+    # page.wait_for_timeout(timeout=500)
+    # for tab in ("技能", "炼丹", "合成", "技能"):
+    #     page.click(f"div[role=\"tab\"]:text(\"{tab}\")")
+    #     page.wait_for_timeout(timeout=300)
+    # page.locator("input[type=\"text\"]:below(:has-text(\"已领悟技能\"))").click()
+    # page.wait_for_timeout(timeout=300)
+    # page.locator(f'div[class=\"el-scrollbar\"] div ul li:has-text(\"{conf.get("fight").get("skill")}\")').click()
+    # page.wait_for_timeout(timeout=300)
+    # page.locator("button[type=button]:has-text(\"保存\")").click()
+    # page.wait_for_timeout(timeout=300)
+    # page.click("text=地图场景")
+    # page.wait_for_timeout(timeout=300)
