@@ -17,21 +17,42 @@ class UserVars:
         self.team_password: str = ""
 
 
+def format_string_num(s: str) -> str:
+    sign = np.sign(int(s))
+    num = abs(int(s))
+    if num >= 1e4:
+        return f'{sign * num / 1e4:.1f}万/小时'
+    else:
+        return f'{sign * num:.1f}/小时'
+
+
+def string2num(s: str):
+    if s.endswith('w'):
+        return float(s[-1]) * 1e4
+    elif s.endswith('e'):
+        return float(s[-1]) * 1e8
+    else:
+        return int(s)
+
+
 def get_user_info(page: Page) -> dict:
+    info_div = page.locator("div[class=\"info\"]")
+    info_key = info_div.locator("span[class=\"k\"]")
+    info_value = info_div.locator("span[class=\"vt\"]")
+    info_dict = {info_key.nth(i).inner_text().strip()[:-1]: info_value.nth(i).inner_text().strip() for i in range(info_key.count() - 2)}
     d = dict()
-    page.click("div[id=\"tab-1\"]:has-text(\"装备\")")
-    page.wait_for_timeout(timeout=500)
-    page.click("div[id=\"tab-0\"]:has-text(\"信息\")")
-    page.wait_for_timeout(timeout=500)
-    d['经验条'] = page.locator("[class=\"exp\"]").inner_text()
-    d['名称'] = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"名称\"))").first.inner_text()
-    xw_str = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"修为\"))").first.inner_text()
-    d['修为'] = int(float(xw_str[:-1]) * 1e8) if xw_str.endswith("e") else int(xw_str)
-    d['气血储备'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"气血储备\"))").first.inner_text())
-    d['魔法储备'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"魔法储备\"))").first.inner_text())
-    d['心魔'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"心魔\"))").first.inner_text())
-    d['速力'] = int(page.locator("span[class=\"info-v\"]:right-of(:has-text(\"速力\"))").first.inner_text())
-    d['灵力'] = int(re.search(r"总灵力\((\d+)\)", page.locator("text=总灵力").inner_text()).group(1))
+    # page.click("div[id=\"tab-1\"]:has-text(\"装备\")")
+    # page.wait_for_timeout(timeout=500)
+    # page.click("div[id=\"tab-0\"]:has-text(\"信息\")")
+    # page.wait_for_timeout(timeout=500)
+    # d['经验条'] = page.locator("[class=\"exp\"]").inner_text()
+    d['名称'] = info_dict.get("名称")
+    d['修为'] = string2num(info_dict.get("修为"))
+    d['气血储备'] = string2num(info_dict.get("气血储备"))
+    d['魔法储备'] = string2num(info_dict.get("魔法储备"))
+    d['心魔'] = string2num(info_dict.get("心魔"))
+    d['速力'] = string2num(info_dict.get("速力"))
+    d['灵力'] = string2num(info_key.last.inner_text().split("：")[1])
     if d['气血储备'] < 70000:
         exchange_hp(page)
     if d['魔法储备'] < 70000:
@@ -42,22 +63,12 @@ def get_user_info(page: Page) -> dict:
 
 
 def get_fight_result(page: Page):
-    page.click("text=结算日志")
-    page.wait_for_timeout(timeout=300)
-    page.locator("div:has-text(\"累计胜利\")").last.inner_text()
+    page.click("text=累计奖励")
+    page.wait_for_selector("text=败北", timeout=2000)
     log_result_frame = page.locator("div[role=\"tabpanel\"]:has-text(\"累计胜利\") div div")
     fight_stats = {k: int(v) for k, v in re.findall(r"(.+?):(\d+)", log_result_frame.nth(2).inner_text())}
     reward_items = {k: int(v) for k, v in re.findall(r"(\w+)\s*?x(\d+)", log_result_frame.nth(1).inner_text())}
     return fight_stats, reward_items
-
-
-def format_string_num(s: str) -> str:
-    sign = np.sign(int(s))
-    num = abs(int(s))
-    if num >= 1e4:
-        return f'{sign * num / 1e4:.1f}万/小时'
-    else:
-        return f'{sign * num:.1f}/小时'
 
 
 def estimate_info(deq) -> Tuple[dict, dict]:
@@ -83,31 +94,31 @@ def estimate_info(deq) -> Tuple[dict, dict]:
 
 def exchange_hp(page: Page, ling=10000):
     DynLog.record_log("兑换一次气血")
-    page.locator("text=总灵力").hover()
+    page.click("button:has-text(\"聚灵\")")
     page.wait_for_timeout(timeout=300)
-    page.locator("input[max=\"100000\"]").fill(str(ling))
+    page.locator("input[placeholder=\"请输入灵力\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
-    page.locator("a:has-text(\"聚灵\")").click()
+    page.click("button:has-text(\"转换\")")
     DynLog.record_log("继续")
 
 
 def exchange_mp(page: Page, ling=10000):
     DynLog.record_log("兑换一次魔法")
-    page.locator("text=总灵力").hover()
+    page.click("button:has-text(\"凝元\")")
     page.wait_for_timeout(timeout=300)
-    page.locator("input[max=\"100000\"]").fill(str(ling))
+    page.locator("input[placeholder=\"请输入灵力\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
-    page.locator("a:has-text(\"凝元\")").click()
+    page.click("button:has-text(\"转换\")")
     DynLog.record_log("继续")
 
 
 def exchange_sl(page: Page, ling=10000):
     DynLog.record_log("兑换一次速力")
-    page.locator("text=总灵力").hover()
+    page.click("button:has-text(\"炼神\")")
     page.wait_for_timeout(timeout=300)
-    page.locator("input[max=\"100000\"]").fill(str(ling))
+    page.locator("input[placeholder=\"请输入灵力\"]").fill(str(ling))
     page.wait_for_timeout(timeout=300)
-    page.locator("a:has-text(\"炼神\")").click()
+    page.click("button:has-text(\"转换\")")
     DynLog.record_log("继续")
 
 

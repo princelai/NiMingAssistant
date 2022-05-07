@@ -11,7 +11,7 @@ from playwright.sync_api import Page
 
 from display import DynLog
 from info import UserVars, update_display_info
-from login import login, refresh_direct, switch_tab_to
+from login import login, refresh_direct
 from map import CityMap
 
 
@@ -32,31 +32,18 @@ def get_team_list(page: Page) -> DataFrame:
     return df
 
 
-def auto_fight_on(page: Page, fight_config: dict, cycle=True):
-    page.click("text=战斗日志")
-    page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"普通攻击\"]", timeout=10000)
-
-    if cycle:
-        page.click("text=循环挑战")
-        page.wait_for_timeout(timeout=300)
-
-    skill_name = fight_config.get("skill")
-    page.wait_for_selector(f"div[class=\"skill-bar\"] > div > img[alt=\"{skill_name}\"]", timeout=3000)
-    skill = page.locator(f"div[class=\"skill-bar\"] > div > img[alt=\"{skill_name}\"]")
-    if skill.count() == 1:
-        skill.click()
-
-    auto_fight_box = page.locator(f"text=自动 ↓技能↓ >> input[type=\"checkbox\"]")
-    auto_fight_box.check()
+def create_team(page):
+    page.click("text=自定创建")
     page.wait_for_timeout(timeout=300)
-    page.click("text=地图场景")
+    page.locator("input[placeholder=\"入队密令(默认无)\"]").fill("3333")
     page.wait_for_timeout(timeout=300)
-    DynLog.record_log("开启自动战斗成功")
+    page.click("div[class=\"n-popconfirm__action\"] > button:has-text(\"创建\")")
 
 
 def fight(page: Page, fight_config: dict, person_vars: UserVars):
     DynLog.record_log("准备战斗")
-    switch_tab_to(page, tab="地图场景", num=2)
+    page.click("div[id=\"tab-scene-tab\"]")
+    page.wait_for_timeout(timeout=300)
     page.click("button:has-text(\"刷新列表\")")
 
     while True:
@@ -73,7 +60,6 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
                     page.wait_for_selector(f'div[class=\"ant-card-body\"]:has-text(\"{fight_config.get("captain")}\")', timeout=1000)
                     DynLog.record_log(f'加入队长{fight_config.get("captain")}队伍')
                     person_vars.team_leader = fight_config.get("captain")
-                    auto_fight_on(page, fight_config, cycle=False)
                 except Exception:
                     if fight_config.get("fallback"):
                         fight_config["captain"] = None
@@ -100,7 +86,6 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
             monster_list = [s.strip() for s in battle_div.locator("span[class=\"scene-name\"]").all_inner_texts()]
             monster_id = monster_list.index(fight_config.get("monster"))
             battle_div.locator("img[title=\"挑战\"]").nth(monster_id).click()
-            auto_fight_on(page, fight_config)
             df_team = get_team_list(page)
             name = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"名称\"))").first.inner_text()
             person_vars.team_leader = name
@@ -136,8 +121,7 @@ def guaji(page: Page, user_config, person_vars: UserVars):
                 cond = estimate1['hm'] > 1e3
             else:
                 cond = 0
-            if (page.locator("div[role=\"alert\"]:has-text(\"你已掉线...\")").count() >= 1) or (
-                    page.locator("a:has-text(\"X\")").count() == 0) or cond:
+            if (page.locator("text=链接被关闭").count() >= 1) or cond:
                 DynLog.record_log(f"程序主动重启,{cond}", error=True)
                 refresh_direct(page)
                 break

@@ -25,9 +25,9 @@ def dispatcher(browser, user_config):
     context = browser.new_context(viewport={'width': 1920, 'height': 1080})
     context.clear_cookies()
     page = context.new_page()
-    with page.expect_navigation(url="https://game.nimingxx.com/login", timeout=8000):
-        page.goto("https://game.nimingxx.com/login", timeout=8000)
-    page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=10000)
+    with page.expect_navigation(url="https://nimingxx.com/login", timeout=8000):
+        page.goto("https://nimingxx.com/login", timeout=8000)
+    page.wait_for_selector("input[placeholder=\"密码\"]", timeout=10000)
 
     mission_id_map: dict[int, Callable[[Page, dict], None]] = {1: YaoLing.run, 2: XiangYao.run, 3: XunBao.run}
     if user_config['mission']['id']:
@@ -50,7 +50,7 @@ def run(playwright: Playwright) -> None:
         f.unlink()
 
     # TODO(kevin):无头设置，记得每次检查一下是否为True
-    browser = playwright.chromium.launch(headless=True)
+    browser = playwright.chromium.launch(headless=False)
 
     with Live(DisplayLayout.my_layout, refresh_per_second=6, screen=True):
         dispatcher(browser, user_config)

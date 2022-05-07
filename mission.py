@@ -6,9 +6,8 @@ from typing import Optional
 from playwright.sync_api import Page
 
 from display import DynLog
-from fight import auto_fight_on
 from info import UserVars, update_display_info
-from login import login, switch_tab_to
+from login import login
 from map import CityMap
 
 

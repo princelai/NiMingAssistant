@@ -31,7 +31,7 @@ class ProgramInfo:
         info1 = Align.center(Text(time1_str, style="bold magenta", justify="center"))
         # TODO(kevin): 每次更新时候增加版本号
         info2 = Text(
-            """Version:0.9.9  项目主页:https://github.com/princelai/NiMingAssistant""",
+            """Version:0.10.0  项目主页:https://github.com/princelai/NiMingAssistant""",
             justify="center",
         )
 
@@ -76,8 +76,7 @@ class UserMainInfo:
         for _ in range(6):
             message.add_column(justify="right")
             message.add_column(justify="left")
-        message.add_row("经验条:", self.values.get("user_info", {}).get("经验条", ""),
-                        "修为:", str(self.values.get("user_info", {}).get("修为", "")),
+        message.add_row("修为:", str(self.values.get("user_info", {}).get("修为", "")),
                         "气血储备:", str(self.values.get("user_info", {}).get("气血储备", "")),
                         "魔法储备:", str(self.values.get("user_info", {}).get("魔法储备", "")),
                         "灵力:", str(self.values.get("user_info", {}).get("灵力", "")),

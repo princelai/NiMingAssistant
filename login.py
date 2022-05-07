@@ -34,7 +34,7 @@ def valid_config(c: dict) -> dict:
 def refresh_direct(page: Page):
     while True:
         try:
-            with page.expect_navigation(url="https://game.nimingxx.com/login"):
+            with page.expect_navigation(url="https://nimingxx.com/login"):
                 page.reload(timeout=5000)
         except Exception:
             DynLog.record_log("页面重载失败，继续重试", error=True)
@@ -44,18 +44,43 @@ def refresh_direct(page: Page):
             break
 
 
-def switch_tab_to(page, tab, num=2, timeout=500):
-    num = 2 if num <= 1 else num
-    tabs = ("储物戒", "地图场景", "活动", "修行", "战斗日志", "分身",  "宗门",  "其他日志")
-    for tab in choices(tabs, k=num) + [tab]:
-        page.click(f"text={tab}")
-        page.wait_for_timeout(timeout=timeout)
-        if tab == "活动":
-            page.wait_for_selector("button:has-text(\"领取维护补偿\")", timeout=2000)
-            if page.locator("button:has-text(\"日日签\")").count() == 1:
-                page.locator("button:has-text(\"日日签\")").click()
-                page.wait_for_timeout(timeout=500)
-            page.locator("button:has-text(\"领取维护补偿\")").click()
+def check_in(page):
+    page.locator("text=当前活动").click()
+    page.wait_for_timeout(timeout=300)
+    if page.locator("button:has-text(\"日日签\")").count() == 1:
+        page.click("button:has-text(\"日日签\")")
+        page.wait_for_timeout(timeout=300)
+    page.click("button:has-text(\"领取维护补偿\")")
+    page.wait_for_timeout(timeout=300)
+    page.keyboard.press(key='Escape')
+
+
+def auto_fight(page, fight_conf):
+    skill_name = fight_conf.get("skill")
+    page.click("div[data-name=\"tab-bat\"]")
+    page.wait_for_selector("text=普通攻击", timeout=10000)
+    page.click("text=普通攻击")
+    page.wait_for_timeout(timeout=300)
+    page.click(f"text={skill_name}")
+    page.wait_for_timeout(timeout=300)
+    page.locator("text=手动").last.click()
+    page.locator("text=开启循环").last.click()
+    page.wait_for_timeout(timeout=300)
+    DynLog.record_log("开启自动战斗成功")
+
+
+def disable_animation(page):
+    page.click("svg[class=\"svg-icon icon-setting\"]")
+    page.wait_for_timeout(timeout=500)
+    page.uncheck("text=自动跳转战斗")
+    page.wait_for_timeout(timeout=300)
+    page.uncheck("text=播放战斗动画")
+    page.wait_for_timeout(timeout=300)
+
+    page.locator("button:has-text(\"保存\")").last.click()
+    page.wait_for_selector("text=配置已生效", timeout=2000)
+    page.keyboard.press(key='Escape')
+    page.wait_for_timeout(timeout=300)
 
 
 def login(page: Page, conf: dict):
@@ -63,17 +88,15 @@ def login(page: Page, conf: dict):
     while True:
         try:
             page.reload()
-            page.wait_for_selector("input[placeholder=\"请输入密码\"]", timeout=10000)
-            page.fill("input[placeholder=\"请输入用户名\"]", conf.get("login").get("username"))
+            page.wait_for_selector("input[placeholder=\"密码\"]", timeout=10000)
+            page.fill("input[placeholder=\"用户名\"]", conf.get("login").get("username"))
             page.wait_for_timeout(timeout=300)
-            page.fill("input[placeholder=\"请输入密码\"]", conf.get("login").get("password"))
-            page.wait_for_timeout(timeout=300)
-            page.check("input[type=\"checkbox\"]")
+            page.fill("input[placeholder=\"密码\"]", conf.get("login").get("password"))
             page.wait_for_timeout(timeout=300)
 
-            with page.expect_navigation(url="https://game.nimingxx.com/home", timeout=5000):
-                page.click("button:has-text(\"立即登陆\")")
-            page.wait_for_selector("text=日志记录", timeout=2000)
+            with page.expect_navigation(url="https://nimingxx.com/home/index", timeout=6000):
+                page.click("button[type=\"button\"]")
+            page.wait_for_selector("text=当前任务", timeout=4000)
             break
         except Exception:
             DynLog.record_log("连接失败", error=True)
@@ -81,43 +104,11 @@ def login(page: Page, conf: dict):
             continue
     DynLog.record_log("登录成功")
 
-    # 初始化队伍和战斗
-    DynLog.record_log("正在初始化界面")
-    switch_tab_to(page, tab="地图场景", num=3, timeout=500)
-
     DynLog.record_log("正在关闭耗费资源的配置")
-    # 关闭日志记录
-    # if (off_log_switch := page.locator("div[role=\"switch\"]")).get_attribute('aria-checked') != 'true':
-    #     off_log_switch.locator("span").click()
-    #     page.wait_for_timeout(timeout=300)
-
-    page.locator("svg[data-icon=\"setting\"]").first.click()
-    # 关闭自动跳转战斗
-    if page.locator("label[class=\"el-checkbox is-checked\"]").count() > 0:
-        page.click("text=自动跳转战斗日志")
-        page.wait_for_timeout(timeout=300)
-
-    # 关闭战斗动画
-    if (fight_animation := page.locator("text=自动跳转战斗日志 是否显示战斗动画效果 清空聊天框记录 >> div[role=\"switch\"]")).get_attribute(
-            'aria-checked') == 'true':
-        fight_animation.locator("span").click()
-        page.wait_for_timeout(timeout=300)
-
-    page.click("button:has-text(\"保 存\")")
-    page.wait_for_selector("text=配置已生效", timeout=2000)
+    # 省流
+    page.locator("text=开启省流").nth(1).click()
     page.wait_for_timeout(timeout=300)
 
-    # 设置自动技能
-    # page.click("text=修行")
-    # page.wait_for_timeout(timeout=500)
-    # for tab in ("技能", "炼丹", "合成", "技能"):
-    #     page.click(f"div[role=\"tab\"]:text(\"{tab}\")")
-    #     page.wait_for_timeout(timeout=300)
-    # page.locator("input[type=\"text\"]:below(:has-text(\"已领悟技能\"))").click()
-    # page.wait_for_timeout(timeout=300)
-    # page.locator(f'div[class=\"el-scrollbar\"] div ul li:has-text(\"{conf.get("fight").get("skill")}\")').click()
-    # page.wait_for_timeout(timeout=300)
-    # page.locator("button[type=button]:has-text(\"保存\")").click()
-    # page.wait_for_timeout(timeout=300)
-    # page.click("text=地图场景")
-    # page.wait_for_timeout(timeout=300)
+    disable_animation(page)
+    auto_fight(page, conf.get('fight'))
+    check_in(page)
