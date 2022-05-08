@@ -25,20 +25,10 @@ class CityMap:
             DynLog.record_log(f"寻路去往{target_map}")
             walk_path = nx.shortest_path(cls.g, curr_map, target_map)[1:]
             for p in walk_path:
-                near_city = page.locator("div[class=\"can-move-map\"] > span")
-                for i in range(near_city.count()):
-                    if near_city.nth(i).inner_text().strip() == p:
-                        near_city.nth(i).click()
-                        break
-
+                page.click(f"text=/{p}$/i")
+                page.wait_for_selector(f"text=当前地图:{p}", timeout=5000)
+                page.wait_for_timeout(timeout=1000)
                 DynLog.record_log(f"路过{p}")
-                for _ in range(6):
-                    near_city = page.locator("div[class=\"can-move-map\"] > span")
-                    if set(cls.g.neighbors(p)) == set(near_city.all_inner_texts()):
-                        break
-                    else:
-                        page.wait_for_timeout(timeout=500)
-                        continue
             DynLog.record_log(f"已到达{target_map}")
 
     @classmethod

@@ -28,9 +28,9 @@ def format_string_num(s: str) -> str:
 
 def string2num(s: str):
     if s.endswith('w'):
-        return float(s[-1]) * 1e4
+        return int(float(s[:-1]) * 1e4)
     elif s.endswith('e'):
-        return float(s[-1]) * 1e8
+        return int(float(s[:-1]) * 1e8)
     else:
         return int(s)
 
@@ -41,11 +41,6 @@ def get_user_info(page: Page) -> dict:
     info_value = info_div.locator("span[class=\"vt\"]")
     info_dict = {info_key.nth(i).inner_text().strip()[:-1]: info_value.nth(i).inner_text().strip() for i in range(info_key.count() - 2)}
     d = dict()
-    # page.click("div[id=\"tab-1\"]:has-text(\"装备\")")
-    # page.wait_for_timeout(timeout=500)
-    # page.click("div[id=\"tab-0\"]:has-text(\"信息\")")
-    # page.wait_for_timeout(timeout=500)
-    # d['经验条'] = page.locator("[class=\"exp\"]").inner_text()
     d['名称'] = info_dict.get("名称")
     d['修为'] = string2num(info_dict.get("修为"))
     d['气血储备'] = string2num(info_dict.get("气血储备"))
@@ -65,9 +60,10 @@ def get_user_info(page: Page) -> dict:
 def get_fight_result(page: Page):
     page.click("text=累计奖励")
     page.wait_for_selector("text=败北", timeout=2000)
-    log_result_frame = page.locator("div[role=\"tabpanel\"]:has-text(\"累计胜利\") div div")
-    fight_stats = {k: int(v) for k, v in re.findall(r"(.+?):(\d+)", log_result_frame.nth(2).inner_text())}
-    reward_items = {k: int(v) for k, v in re.findall(r"(\w+)\s*?x(\d+)", log_result_frame.nth(1).inner_text())}
+    log_fight_frame = page.locator("span[class=\"bat-log-p\"]")
+    fight_stats = {(tmp := log_fight_frame.nth(i).inner_text().split(":"))[0]: int(tmp[1]) for i in range(log_fight_frame.count())}
+    log_reward_frame = page.locator("span[class=\"bat-log-p goods\"]")
+    reward_items = {(tmp := log_reward_frame.nth(i).inner_text().split(" x"))[0]: int(tmp[1]) for i in range(log_reward_frame.count())}
     return fight_stats, reward_items
 
 
@@ -122,7 +118,7 @@ def exchange_sl(page: Page, ling=10000):
     DynLog.record_log("继续")
 
 
-def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
+def update_display_info(page: Page, info_deque, person_vars: UserVars) :
     user_info = get_user_info(page)
     info_deque['time'].append(datetime.now())
     info_deque['exp'].append(user_info['修为'])
@@ -139,7 +135,7 @@ def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
     match_time2 = re.search(r"(\d+)\sdays\s(\d+):(\d+)", str(train_time))
     time2_str = f"{int(match_time2.group(1))}天{int(match_time2.group(2))}小时{int(match_time2.group(3))}分"
 
-    dd = {"team_info": {"leader": person_vars.team_leader, "num": page.locator("a:has-text(\"X\")").count(),
+    dd = {"team_info": {"leader": person_vars.team_leader, "num": page.locator("svg[class=\"svg-icon icon-power\"]").count(),
                         "passwd": person_vars.team_password, "time": time2_str},
           "user_info": user_info,
           "fight_info": stats,
@@ -147,4 +143,4 @@ def update_display_info(page: Page, info_deque, person_vars: UserVars) -> dict:
           "estimate_info": estimate2}
 
     DisplayLayout.update_user_info(value=dd)
-    return estimate1
+

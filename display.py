@@ -89,9 +89,9 @@ class UserMainInfo:
         for _ in range(3):
             message.add_column(justify="right")
             message.add_column(justify="left")
-        message.add_row("累计胜利:", str(self.values.get("fight_info", {}).get("累计胜利", "")),
-                        "累计败北:", str(self.values.get("fight_info", {}).get("累计败北", "")),
-                        "累计修为:", str(self.values.get("fight_info", {}).get("累计修为", "")))
+        message.add_row("胜利:", str(self.values.get("fight_info", {}).get("胜利", "")),
+                        "败北:", str(self.values.get("fight_info", {}).get("败北", "")),
+                        "修为:", str(self.values.get("fight_info", {}).get("修为", "")))
         return Panel(message, title="战斗信息")
 
     def make_estimate_info(self):

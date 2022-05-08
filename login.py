@@ -1,5 +1,3 @@
-from random import choices
-
 from playwright.sync_api import Page
 
 from display import DynLog
@@ -26,7 +24,6 @@ def valid_config(c: dict) -> dict:
 
     new_c['fight'].update({"material": c.get('fight', {}).get("material")})
     new_c['fight'].update({"captain": c.get('fight', {}).get("captain")})
-    new_c['fight'].update({"fallback": c.get('fight', {}).get("fallback")})
     new_c['mission'].update({"id": c.get('mission', {}).get("id")})
     return new_c
 
@@ -53,20 +50,6 @@ def check_in(page):
     page.click("button:has-text(\"领取维护补偿\")")
     page.wait_for_timeout(timeout=300)
     page.keyboard.press(key='Escape')
-
-
-def auto_fight(page, fight_conf):
-    skill_name = fight_conf.get("skill")
-    page.click("div[data-name=\"tab-bat\"]")
-    page.wait_for_selector("text=普通攻击", timeout=10000)
-    page.click("text=普通攻击")
-    page.wait_for_timeout(timeout=300)
-    page.click(f"text={skill_name}")
-    page.wait_for_timeout(timeout=300)
-    page.locator("text=手动").last.click()
-    page.locator("text=开启循环").last.click()
-    page.wait_for_timeout(timeout=300)
-    DynLog.record_log("开启自动战斗成功")
 
 
 def disable_animation(page):
@@ -110,5 +93,4 @@ def login(page: Page, conf: dict):
     page.wait_for_timeout(timeout=300)
 
     disable_animation(page)
-    auto_fight(page, conf.get('fight'))
     check_in(page)

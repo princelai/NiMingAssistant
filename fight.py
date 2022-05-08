@@ -1,10 +1,7 @@
-import re
 from collections import defaultdict, deque
 from datetime import datetime
 from functools import partial
-from pathlib import Path
 
-import joblib
 import pandas as pd
 from pandas import DataFrame
 from playwright.sync_api import Page
@@ -17,27 +14,46 @@ from map import CityMap
 
 def get_team_list(page: Page) -> DataFrame:
     page.click("button:has-text(\"刷新列表\")")
-    page.wait_for_timeout(timeout=1000)
-    team_list = page.locator("[class=\"team-list-row el-row\"]")
+    page.wait_for_timeout(timeout=500)
+    team_list = page.locator("div[class=\"el-row team-list-row\"]")
     d = defaultdict(list)
     for i in range(team_list.count()):
-        s = team_list.nth(i).text_content()
-        team_info = re.split(r"\s+", s.strip())[:3]
-        d['captain'].append(team_info[0])
-        d['monster'].append(team_info[1])
-        d['team_size'].append(team_info[2])
-        d['encryption'].append(team_list.nth(i).locator("svg[data-icon=\"lock\"]"))
-        d['join_team'].append(team_list.nth(i).locator("a:has-text(\"+\")"))
-    df = pd.DataFrame(d, columns=['captain', 'monster', 'team_size', 'encryption', 'join_team'])
+        sub_div = team_list.nth(i).locator("div > div")
+        d['captain'].append(sub_div.nth(1).inner_text())
+        if sub_div.count() == 7:
+            d['monster'].append(sub_div.nth(5).inner_text())
+        else:
+            d['monster'].append(sub_div.nth(6).inner_text())
+        d['join_team'].append(sub_div.nth(3))
+    df = pd.DataFrame(d, columns=['captain', 'monster', 'join_team'])
     return df
 
 
+def auto_fight(page, fight_conf):
+    skill_name = fight_conf.get("skill")
+    page.click("div[data-name=\"tab-bat\"]")
+    page.wait_for_selector("text=普通攻击", timeout=10000)
+    page.click("text=普通攻击")
+    page.wait_for_timeout(timeout=300)
+    page.click(f"text={skill_name}")
+    page.wait_for_timeout(timeout=300)
+    page.locator("text=开启循环").last.click()
+    page.wait_for_timeout(timeout=300)
+    page.locator("text=手动").last.click()
+    DynLog.record_log("开启自动战斗成功")
+
+
 def create_team(page):
+    page.click("div[id=\"tab-scene-tab\"]")
+    page.wait_for_timeout(timeout=300)
     page.click("text=自定创建")
     page.wait_for_timeout(timeout=300)
     page.locator("input[placeholder=\"入队密令(默认无)\"]").fill("3333")
     page.wait_for_timeout(timeout=300)
     page.click("div[class=\"n-popconfirm__action\"] > button:has-text(\"创建\")")
+    page.wait_for_timeout(timeout=300)
+    page.click("text=自定创建")
+    page.wait_for_timeout(timeout=300)
 
 
 def fight(page: Page, fight_config: dict, person_vars: UserVars):
@@ -49,32 +65,19 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
     while True:
         if fight_config.get("captain"):
             df_team = get_team_list(page)
-            if fight_config.get("captain") in df_team.captain.values:
-                try:
-                    df_team.loc[df_team.captain == fight_config.get("captain"), "join_team"].iloc[0].click()
-                    passwd_loc = "div[class=\"ant-modal-content\"] >> input[role=\"spinbutton\"]"
-                    page.wait_for_selector(passwd_loc, timeout=1000)
-                    page.locator(passwd_loc).fill(joblib.load("password.bin"))
-                    page.wait_for_timeout(timeout=300)
-                    page.locator("button[type=\"button\"]:has-text(\"确认加入\")").click()
-                    page.wait_for_selector(f'div[class=\"ant-card-body\"]:has-text(\"{fight_config.get("captain")}\")', timeout=1000)
-                    DynLog.record_log(f'加入队长{fight_config.get("captain")}队伍')
-                    person_vars.team_leader = fight_config.get("captain")
-                except Exception:
-                    if fight_config.get("fallback"):
-                        fight_config["captain"] = None
-                        DynLog.record_log("加入队长模式错误，进入回落模式", error=True)
-                    else:
-                        DynLog.record_log("加入队长模式错误，等待后重试", error=True)
-                        page.wait_for_timeout(timeout=10000)
-                    continue
-            else:
-                if fight_config.get("fallback"):
-                    fight_config["captain"] = None
-                    DynLog.record_log("队长不在地图中，进入回落模式", error=True)
-                else:
-                    DynLog.record_log("队长不在地图中，等待后重试", error=True)
-                    page.wait_for_timeout(timeout=10000)
+            try:
+                df_team.loc[df_team.captain == fight_config.get("captain"), "join_team"].iloc[0].click()
+                passwd_loc = "div[class=\"ant-modal-content\"] >> input[role=\"spinbutton\"]"
+                page.wait_for_selector(passwd_loc, timeout=1000)
+                page.locator(passwd_loc).fill("3333")
+                page.wait_for_timeout(timeout=300)
+                page.locator("button[type=\"button\"]:has-text(\"确认加入\")").click()
+                page.wait_for_selector(f'div[class=\"ant-card-body\"]:has-text(\"{fight_config.get("captain")}\")', timeout=1000)
+                DynLog.record_log(f'加入队长{fight_config.get("captain")}队伍')
+                person_vars.team_leader = fight_config.get("captain")
+            except Exception:
+                DynLog.record_log("加入队长错误，等待后重试", error=True)
+                page.wait_for_timeout(timeout=10000)
                 continue
         else:
             page.click("text=需要密令")
@@ -90,14 +93,7 @@ def fight(page: Page, fight_config: dict, person_vars: UserVars):
             name = page.locator("span[class=\"info-v\"]:right-of(:has-text(\"名称\"))").first.inner_text()
             person_vars.team_leader = name
             if not df_team.empty and name in df_team.captain.values:
-                f = Path("password.bin")
-                if f.exists():
-                    f.unlink()
-                df_team.loc[df_team.captain == name, "encryption"].iloc[0].hover()
-                page.wait_for_selector("text=队伍密令", timeout=1000)
-                passwd = page.locator("text=队伍密令").inner_text().split(":")[1]
-                joblib.dump(passwd, f.as_posix())
-                person_vars.team_password = passwd
+                pass
             else:
                 DynLog.record_log("未能成功创建队伍，重试", error=True)
                 continue
@@ -113,17 +109,14 @@ def guaji(page: Page, user_config, person_vars: UserVars):
         monster = CityMap.map_navigate(page, user_config.get("fight"))
         user_config["fight"]["monster"] = monster
         fight(page, user_config.get("fight"), person_vars)
-        info_deque = defaultdict(partial(deque, maxlen=128))
+        info_deque = defaultdict(partial(deque, maxlen=256))
         person_vars.train_start_time = datetime.now()
-        estimate1 = {}
         while True:
-            if estimate1:
-                cond = estimate1['hm'] > 1e3
-            else:
-                cond = 0
-            if (page.locator("text=链接被关闭").count() >= 1) or cond:
-                DynLog.record_log(f"程序主动重启,{cond}", error=True)
+
+            team_members = page.locator("svg[class=\"svg-icon icon-power\"]").count()
+            if (page.locator("text=链接被关闭").count() >= 1) or team_members == 0:
+                DynLog.record_log("程序主动重启", error=True)
                 refresh_direct(page)
                 break
-            estimate1 = update_display_info(page, info_deque, person_vars)
+            update_display_info(page, info_deque, person_vars)
             page.wait_for_timeout(timeout=15000)
