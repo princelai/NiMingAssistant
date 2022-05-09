@@ -6,16 +6,15 @@ from typing import Optional
 from playwright.sync_api import Page
 
 from display import DynLog
-from info import UserVars, update_display_info
+from info import update_display_info
 from login import login
 from map import CityMap
+from fight import auto_fight, get_monster_list, create_team
 
 
 class YaoLing:
     start_city = "丹城"
-    auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
-    person_vars = UserVars()
 
     @classmethod
     def mission_take(cls, page: Page) -> Optional[bool]:
@@ -57,31 +56,26 @@ class YaoLing:
 
         mission.click()
         DynLog.record_log("飞过去")
-        switch_tab_to(page, tab="地图场景", num=2)
+        page.click("div[id=\"tab-scene-tab\"]")
+        page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         DynLog.record_log("任务传送成功")
         # 战斗
         while True:
-            switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
-            battle_div = page.locator(f"div[class=\"el-row\"]:above(:has-text(\"附近NPC\")):right-of(:has-text(\"附近灵兽\"))")
-            monster_list = [s.strip() for s in battle_div.locator("span[class=\"scene-name\"]").all_inner_texts()]
+            battle_icon, monster_list = get_monster_list(page)
             monster_id = monster_list.index(mission_monster)
-            battle_div.locator("img[title=\"挑战\"]").nth(monster_id).click()
-
-            # 自动战斗
-            if not cls.auto_fight:
-                auto_fight_on(page, fight_config, cycle=False)
-                cls.auto_fight = True
+            battle_icon[monster_id].click()
 
             # TODO(kevin): 更智能的判断结束
             while True:
-                switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
+                page.click("div[id=\"tab-scene-tab\"]")
+                page.wait_for_timeout(timeout=500)
                 if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
                     break
                 else:
                     continue
 
-            update_display_info(page, cls.info_deque, cls.person_vars)
+            update_display_info(page, cls.info_deque)
             page.locator("i[class=\"el-icon-refresh\"]").click()
             page.wait_for_timeout(timeout=500)
             if mission.count() == 0:
@@ -93,10 +87,12 @@ class YaoLing:
         for i in range(10):
             if page.url.endswith('login'):
                 login(page, user_config)
+                create_team(page)
+                auto_fight(page, user_config.get("fight"), False)
             DynLog.record_log("开始做药灵任务")
-            update_display_info(page, cls.info_deque, cls.person_vars)
-            page.click("text=地图场景")
-            page.wait_for_timeout(timeout=300)
+            update_display_info(page, cls.info_deque)
+            page.click("div[id=\"tab-scene-tab\"]")
+            page.wait_for_timeout(timeout=500)
 
             if page.locator("text=-寻找药灵").count() == 0:
                 success = cls.mission_take(page)
@@ -114,7 +110,6 @@ class XiangYao:
     start_city = "林中栈道"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
-    person_vars = UserVars()
 
     @classmethod
     def mission_take(cls, page: Page):
@@ -122,7 +117,8 @@ class XiangYao:
 
         DynLog.record_log("接取降妖任务")
         page.wait_for_selector("button:has-text(\"凌中天\")", timeout=3000)
-        switch_tab_to(page, tab="地图场景", num=2)
+        page.click("div[id=\"tab-scene-tab\"]")
+        page.wait_for_timeout(timeout=500)
 
         if page.locator("a:has-text(\"X\")").count() == 0:
             page.click("text=需要密令")
@@ -166,13 +162,15 @@ class XiangYao:
 
         mission.click()
         DynLog.record_log("飞过去")
-        switch_tab_to(page, tab="地图场景", num=2)
+        page.click("div[id=\"tab-scene-tab\"]")
+        page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         DynLog.record_log("任务传送成功")
         for j in range(10):
             for p in CityMap.neighbor_city(mission_city):
                 CityMap.move_to_map(page, p)
-                switch_tab_to(page, tab="地图场景", num=2)
+                page.click("div[id=\"tab-scene-tab\"]")
+                page.wait_for_timeout(timeout=500)
                 battle_div = page.locator(f"div[class=\"el-row\"]:above(:has-text(\"附近NPC\")):right-of(:has-text(\"附近灵兽\"))")
                 monster_list = [s.strip() for s in battle_div.locator("span[class=\"scene-name\"]").all_inner_texts()]
                 if mission_monster in monster_list:
@@ -184,16 +182,13 @@ class XiangYao:
                     continue
             # 战斗
             while True:
-                switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
-                DynLog.record_log("准备和妖兽决战")
-                battle_div = page.locator(f"div[class=\"el-row\"]:above(:has-text(\"附近NPC\")):right-of(:has-text(\"附近灵兽\"))")
-                monster_list = [s.strip() for s in battle_div.locator("span[class=\"scene-name\"]").all_inner_texts()]
+                battle_icon, monster_list = get_monster_list(page)
                 monster_id = monster_list.index(mission_monster)
-                battle_div.locator("img[title=\"挑战\"]").nth(monster_id).click()
+                battle_icon[monster_id].click()
 
                 # 自动战斗
                 if not cls.auto_fight:
-                    auto_fight_on(page, fight_config, cycle=False)
+                    auto_fight(page, fight_config, False)
                     cls.auto_fight = True
 
                 try:
@@ -205,8 +200,9 @@ class XiangYao:
                     DynLog.record_log("没打过")
                     continue
 
-                update_display_info(page, cls.info_deque, cls.person_vars)
-                switch_tab_to(page, tab="地图场景", num=2)
+                update_display_info(page, cls.info_deque)
+                page.click("div[id=\"tab-scene-tab\"]")
+                page.wait_for_timeout(timeout=500)
 
                 page.locator("i[class=\"el-icon-refresh\"]").click()
                 page.wait_for_timeout(timeout=500)
@@ -218,10 +214,12 @@ class XiangYao:
         for i in range(3):
             if page.url.endswith('login'):
                 login(page, user_config)
+                create_team(page)
+                auto_fight(page, user_config.get("fight"), False)
             DynLog.record_log("开始做降妖任务")
-            update_display_info(page, cls.info_deque, cls.person_vars)
-            page.click("text=地图场景")
-            page.wait_for_timeout(timeout=300)
+            update_display_info(page, cls.info_deque)
+            page.click("div[id=\"tab-scene-tab\"]")
+            page.wait_for_timeout(timeout=500)
 
             if page.locator("text=-降妖").count() == 0:
                 success = cls.mission_take(page)
@@ -239,7 +237,6 @@ class XunBao:
     start_city = "阳城"
     auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
-    person_vars = UserVars()
 
     @classmethod
     def mission_take(cls, page: Page) -> Optional[bool]:
@@ -281,31 +278,31 @@ class XunBao:
 
         mission.click()
         DynLog.record_log("飞过去")
-        switch_tab_to(page, tab="地图场景", num=2)
+        page.click("div[id=\"tab-scene-tab\"]")
+        page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
         DynLog.record_log("任务传送成功")
         # 战斗
         while True:
-            switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
-            battle_div = page.locator(f"div[class=\"el-row\"]:above(:has-text(\"附近NPC\")):right-of(:has-text(\"附近灵兽\"))")
-            monster_list = [s.strip() for s in battle_div.locator("span[class=\"scene-name\"]").all_inner_texts()]
+            battle_icon, monster_list = get_monster_list(page)
             monster_id = monster_list.index(mission_monster)
-            battle_div.locator("img[title=\"挑战\"]").nth(monster_id).click()
+            battle_icon[monster_id].click()
 
             # 自动战斗
             if not cls.auto_fight:
-                auto_fight_on(page, fight_config, cycle=False)
+                auto_fight(page, fight_config, False)
                 cls.auto_fight = True
 
             # TODO(kevin): 更智能的判断结束
             while True:
-                switch_tab_to(page, tab="地图场景", num=2, timeout=1000)
+                page.click("div[id=\"tab-scene-tab\"]")
+                page.wait_for_timeout(timeout=500)
                 if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
                     break
                 else:
                     continue
 
-            update_display_info(page, cls.info_deque, cls.person_vars)
+            update_display_info(page, cls.info_deque)
             page.locator("i[class=\"el-icon-refresh\"]").click()
             page.wait_for_timeout(timeout=500)
             if mission.count() == 0:
@@ -317,10 +314,12 @@ class XunBao:
         for i in range(10):
             if page.url.endswith('login'):
                 login(page, user_config)
+                create_team(page)
+                auto_fight(page, user_config.get("fight"), False)
             DynLog.record_log("开始做寻宝任务")
-            update_display_info(page, cls.info_deque, cls.person_vars)
-            page.click("text=地图场景")
-            page.wait_for_timeout(timeout=300)
+            update_display_info(page, cls.info_deque)
+            page.click("div[id=\"tab-scene-tab\"]")
+            page.wait_for_timeout(timeout=500)
 
             if page.locator("text=-寻宝").count() == 0:
                 success = cls.mission_take(page)

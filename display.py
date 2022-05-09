@@ -75,14 +75,13 @@ class UserMainInfo:
 
     def make_fight_info(self):
         message = Table.grid(expand=True)
-        for _ in range(5):
+        for _ in range(4):
             message.add_column(justify="right")
             message.add_column(justify="left")
         message.add_row("胜利:", str(self.values.get("fight_info", {}).get("胜利", "")),
                         "败北:", str(self.values.get("fight_info", {}).get("败北", "")),
                         "修为:", str(self.values.get("fight_info", {}).get("修为", "")),
-                        "队伍人数:", str(self.values.get("team_info", {}).get("num", "")),
-                        "本队修仙时间:", self.values.get("team_info", {}).get("time", ""))
+                        "队伍人数:", str(self.values.get("team_info", {}).get("num", "")))
         return Panel(message, title="战斗信息")
 
     def make_estimate_info(self):

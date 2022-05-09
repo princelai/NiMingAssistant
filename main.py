@@ -8,7 +8,6 @@ from rich.live import Live
 
 from display import DisplayLayout, DynLog
 from fight import guaji
-from info import UserVars
 from login import valid_config
 from mission import YaoLing, XiangYao, XunBao
 
@@ -33,7 +32,7 @@ def dispatcher(browser, user_config):
     if user_config['mission']['id']:
         mission_id_map.get(user_config['mission']['id'])(page, user_config)
     else:
-        guaji(page, user_config, UserVars())
+        guaji(page, user_config)
 
     DynLog.record_log("程序完成，5秒后自动退出")
     page.wait_for_timeout(timeout=5000)

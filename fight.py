@@ -1,5 +1,4 @@
 from collections import defaultdict, deque
-from datetime import datetime
 from functools import partial
 
 import pandas as pd
@@ -7,14 +6,14 @@ from pandas import DataFrame
 from playwright.sync_api import Page
 
 from display import DynLog
-from info import UserVars, update_display_info
+from info import update_display_info
 from login import login, refresh_direct
 from map import CityMap
 
 
 def get_team_list(page: Page) -> DataFrame:
     page.click("div[id=\"tab-scene-tab\"]")
-    page.wait_for_timeout(timeout=300)
+    page.wait_for_timeout(timeout=500)
     page.click("button:has-text(\"刷新列表\")")
     page.wait_for_timeout(timeout=500)
     team_list = page.locator("div[class=\"el-row team-list-row\"]")
@@ -29,6 +28,16 @@ def get_team_list(page: Page) -> DataFrame:
         d['join_team'].append(sub_div.nth(3))
     df = pd.DataFrame(d, columns=['captain', 'monster', 'join_team'])
     return df
+
+
+def get_monster_list(page):
+    page.click("div[id=\"tab-scene-tab\"]")
+    page.wait_for_timeout(timeout=500)
+    battle_div = page.locator(f"div[class=\"n-scrollbar-content\"]:below(:has-text(\"附近兽群\")):right-of(:has-text(\"附近队伍\"))")
+    battle_icon_div = battle_div.locator("svg[class=\"svg-icon icon-bat\"]")
+    battle_icon = [battle_icon_div.nth(i) for i in range(battle_icon_div.count())]
+    monster_list = battle_div.inner_text().split('\n')
+    return battle_icon, monster_list
 
 
 def auto_fight(page, fight_config, captain):
@@ -72,7 +81,6 @@ def fight(page: Page, fight_config: dict):
             df_team = get_team_list(page)
             try:
                 df_team.loc[df_team.captain == fight_config.get("captain"), "join_team"].iloc[0].click()
-
                 page.wait_for_selector("text=请输入密令", timeout=2000)
                 password_div = page.locator("div[class=\"n-card__content\"]")
                 password_div.locator("input[placeholder=\"请输入\"]").fill("3333")
@@ -89,12 +97,7 @@ def fight(page: Page, fight_config: dict):
         else:
             # 自己当队长
             create_team(page)
-
-            # 和怪物战斗
-            battle_div = page.locator(f"div[class=\"n-scrollbar-content\"]:below(:has-text(\"附近兽群\")):right-of(:has-text(\"附近队伍\"))")
-            battle_icon_div = battle_div.locator("svg[class=\"svg-icon icon-bat\"]")
-            battle_icon = [battle_icon_div.nth(i) for i in range(battle_icon_div.count())]
-            monster_list = battle_div.inner_text().split('\n')
+            battle_icon, monster_list = get_monster_list(page)
             monster_id = monster_list.index(fight_config.get("monster"))
             battle_icon[monster_id].click()
 
@@ -110,7 +113,7 @@ def fight(page: Page, fight_config: dict):
         break
 
 
-def guaji(page: Page, user_config, person_vars: UserVars):
+def guaji(page: Page, user_config):
     while True:
         if page.url.endswith('login'):
             login(page, user_config)
@@ -119,12 +122,11 @@ def guaji(page: Page, user_config, person_vars: UserVars):
         user_config["fight"]["monster"] = monster
         fight(page, user_config.get("fight"))
         info_deque = defaultdict(partial(deque, maxlen=256))
-        person_vars.train_start_time = datetime.now()
         while True:
             team_members = page.locator("svg[class=\"svg-icon icon-power\"]").count()
             if (page.locator("text=链接被关闭").count() >= 1) or team_members == 0:
                 DynLog.record_log("程序主动重启", error=True)
                 refresh_direct(page)
                 break
-            update_display_info(page, info_deque, person_vars)
+            update_display_info(page, info_deque)
             page.wait_for_timeout(timeout=15000)
