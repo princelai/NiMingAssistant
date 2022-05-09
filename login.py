@@ -77,7 +77,7 @@ def login(page: Page, conf: dict):
             page.fill("input[placeholder=\"密码\"]", conf.get("login").get("password"))
             page.wait_for_timeout(timeout=300)
 
-            with page.expect_navigation(url="https://nimingxx.com/home/index", timeout=6000):
+            with page.expect_navigation(url="https://nimingxx.com/home/index", timeout=5000):
                 page.click("button[type=\"button\"]")
             page.wait_for_selector("text=当前任务", timeout=4000)
             break
@@ -90,6 +90,8 @@ def login(page: Page, conf: dict):
     DynLog.record_log("正在关闭耗费资源的配置")
     # 省流
     page.locator("text=开启省流").nth(1).click()
+    page.wait_for_timeout(timeout=300)
+    page.click("div[id=\"tab-scene-tab\"]")
     page.wait_for_timeout(timeout=300)
 
     disable_animation(page)

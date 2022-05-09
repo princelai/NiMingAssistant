@@ -118,7 +118,7 @@ def exchange_sl(page: Page, ling=10000):
     DynLog.record_log("继续")
 
 
-def update_display_info(page: Page, info_deque, person_vars: UserVars) :
+def update_display_info(page: Page, info_deque, person_vars: UserVars):
     user_info = get_user_info(page)
     info_deque['time'].append(datetime.now())
     info_deque['exp'].append(user_info['修为'])
@@ -135,12 +135,10 @@ def update_display_info(page: Page, info_deque, person_vars: UserVars) :
     match_time2 = re.search(r"(\d+)\sdays\s(\d+):(\d+)", str(train_time))
     time2_str = f"{int(match_time2.group(1))}天{int(match_time2.group(2))}小时{int(match_time2.group(3))}分"
 
-    dd = {"team_info": {"leader": person_vars.team_leader, "num": page.locator("svg[class=\"svg-icon icon-power\"]").count(),
-                        "passwd": person_vars.team_password, "time": time2_str},
+    dd = {"team_info": {"num": page.locator("svg[class=\"svg-icon icon-power\"]").count(), "time": time2_str},
           "user_info": user_info,
           "fight_info": stats,
           "reward_info": reward,
           "estimate_info": estimate2}
 
     DisplayLayout.update_user_info(value=dd)
-

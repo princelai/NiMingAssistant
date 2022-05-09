@@ -52,24 +52,13 @@ class UserMainInfo:
 
     def __rich__(self) -> Panel:
         info_panel = Panel(
-            Group(self.make_team_info(), self.make_user_status(), self.make_fight_info(), self.make_estimate_info(), self.make_reward_info()),
+            Group(self.make_user_status(), self.make_fight_info(), self.make_estimate_info(), self.make_reward_info()),
             box=box.ROUNDED,
             padding=(1, 1),
             title=self.values.get("user_info", {}).get("名称", ""),
             border_style="bright_blue",
         )
         return info_panel
-
-    def make_team_info(self):
-        message = Table.grid(expand=True)
-        for _ in range(4):
-            message.add_column(justify="right")
-            message.add_column(justify="left")
-        message.add_row("队长:", self.values.get("team_info", {}).get("leader", ""),
-                        "队伍人数:", str(self.values.get("team_info", {}).get("num", "")),
-                        "队伍密码:", str(self.values.get("team_info", {}).get("passwd", "")),
-                        "本队修仙时间:", self.values.get("team_info", {}).get("time", ""))
-        return Panel(message, title="队伍信息")
 
     def make_user_status(self):
         message = Table.grid(expand=True)
@@ -86,12 +75,14 @@ class UserMainInfo:
 
     def make_fight_info(self):
         message = Table.grid(expand=True)
-        for _ in range(3):
+        for _ in range(5):
             message.add_column(justify="right")
             message.add_column(justify="left")
         message.add_row("胜利:", str(self.values.get("fight_info", {}).get("胜利", "")),
                         "败北:", str(self.values.get("fight_info", {}).get("败北", "")),
-                        "修为:", str(self.values.get("fight_info", {}).get("修为", "")))
+                        "修为:", str(self.values.get("fight_info", {}).get("修为", "")),
+                        "队伍人数:", str(self.values.get("team_info", {}).get("num", "")),
+                        "本队修仙时间:", self.values.get("team_info", {}).get("time", ""))
         return Panel(message, title="战斗信息")
 
     def make_estimate_info(self):
