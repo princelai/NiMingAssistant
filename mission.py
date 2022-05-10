@@ -146,14 +146,17 @@ class XiangYao:
     def mission_do(cls, page: Page, fight_config: dict, i):
         mission = page.locator("text=-降妖")
         mission.hover()
-        page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
-        mission_detail = page.locator("span[class=\"task-brief\"]:has-text(\"地区击败\")")
-        pattern_mission = re.search(r".+【(.+)】.*地区击败(.+)", mission_detail.inner_text())
+        page.wait_for_selector("text=地区击败", timeout=2000)
+        task_info = page.locator("div[class=\"task-info\"]")
+        pattern_mission = re.search(".+【(.+)】.*地区击败(.+)", task_info.inner_text())
         mission_city = pattern_mission.group(1).strip()
         mission_monster = pattern_mission.group(2).strip()
 
         mission.click()
         DynLog.record_log("飞过去")
+        page.wait_for_timeout(timeout=500)
+        page.hover("text=累计奖励")
+        page.wait_for_timeout(timeout=500)
         page.click("div[id=\"tab-scene-tab\"]")
         page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
@@ -177,11 +180,6 @@ class XiangYao:
                 battle_icon, monster_list = get_monster_list(page)
                 monster_id = monster_list.index(mission_monster)
                 battle_icon[monster_id].click()
-
-                # 自动战斗
-                if not cls.auto_fight:
-                    auto_fight(page, fight_config, False)
-                    cls.auto_fight = True
 
                 try:
                     if j < 9:
