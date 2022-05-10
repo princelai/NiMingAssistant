@@ -143,7 +143,7 @@ class XiangYao:
         return True
 
     @classmethod
-    def mission_do(cls, page: Page, fight_config: dict, i):
+    def mission_do(cls, page: Page, i):
         mission = page.locator("text=-降妖")
         mission.hover()
         page.wait_for_selector("text=地区击败", timeout=2000)
@@ -164,10 +164,7 @@ class XiangYao:
         for j in range(10):
             for p in CityMap.neighbor_city(mission_city):
                 CityMap.move_to_map(page, p)
-                page.click("div[id=\"tab-scene-tab\"]")
-                page.wait_for_timeout(timeout=500)
-                battle_div = page.locator(f"div[class=\"el-row\"]:above(:has-text(\"附近NPC\")):right-of(:has-text(\"附近灵兽\"))")
-                monster_list = [s.strip() for s in battle_div.locator("span[class=\"scene-name\"]").all_inner_texts()]
+                battle_icon, monster_list = get_monster_list(page)
                 if mission_monster in monster_list:
                     mission_city = p
                     DynLog.record_log(f"妖兽在{p}")
@@ -175,9 +172,10 @@ class XiangYao:
                 else:
                     DynLog.record_log(f"妖兽不在{p}，继续寻找", error=True)
                     continue
+            else:
+                return False
             # 战斗
             while True:
-                battle_icon, monster_list = get_monster_list(page)
                 monster_id = monster_list.index(mission_monster)
                 battle_icon[monster_id].click()
 
@@ -186,16 +184,17 @@ class XiangYao:
                         page.wait_for_selector("text=快去附近找找看!", timeout=45000)
                     else:
                         page.wait_for_selector("text=完成[降妖]", timeout=45000)
-                except Exception:
+                except TimeoutError:
                     DynLog.record_log("没打过")
                     continue
+                else:
+                    page.click("div[id=\"tab-scene-tab\"]")
+                    page.wait_for_timeout(timeout=500)
 
+                battle_div = page.locator(f"div[class=\"n-scrollbar-content\"]:below(:has-text(\"附近兽群\")):right-of(:has-text(\"附近队伍\"))")
+                if battle_div.locator(f"text={mission_monster}").count() != 0:
+                    continue
                 update_display_info(page, cls.info_deque)
-                page.click("div[id=\"tab-scene-tab\"]")
-                page.wait_for_timeout(timeout=500)
-
-                page.locator("i[class=\"el-icon-refresh\"]").click()
-                page.wait_for_timeout(timeout=500)
                 DynLog.record_log(f"完成今日第{i + 1}次第{j + 1}轮降妖任务")
                 break
 
@@ -217,9 +216,9 @@ class XiangYao:
                     continue
                 elif success is None:
                     break
-                cls.mission_do(page, user_config.get('fight'), i)
+                cls.mission_do(page, i)
             else:
-                cls.mission_do(page, user_config.get('fight'), i)
+                cls.mission_do(page, i)
         DynLog.record_log("任务完成，请手动退出")
 
 
@@ -313,7 +312,7 @@ class XunBao:
                     continue
                 elif success is None:
                     break
-                cls.mission_do(page,  i)
+                cls.mission_do(page, i)
             else:
                 cls.mission_do(page, i)
         DynLog.record_log("任务完成，请手动退出")
