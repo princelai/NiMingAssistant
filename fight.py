@@ -37,6 +37,7 @@ def get_monster_list(page):
     battle_icon_div = battle_div.locator("svg[class=\"svg-icon icon-bat\"]")
     battle_icon = [battle_icon_div.nth(i) for i in range(battle_icon_div.count())]
     monster_list = battle_div.inner_text().split('\n')
+    monster_list = [s for s in monster_list if len(s) > 2]
     return battle_icon, monster_list
 
 
