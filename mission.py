@@ -3,7 +3,7 @@ from collections import defaultdict, deque
 from functools import partial
 from typing import Optional
 
-from playwright.sync_api import Page
+from playwright.sync_api import Page, TimeoutError
 
 from display import DynLog
 from info import update_display_info
@@ -21,14 +21,15 @@ class YaoLing:
         CityMap.move_to_map(page, cls.start_city)
 
         DynLog.record_log("接取药灵任务")
-        page.wait_for_selector("button:has-text(\"旭日药师\")", timeout=3000)
-        while (person := page.locator("button:has-text(\"旭日药师\")")).count() == 1:
+        page.wait_for_selector("div[class=\"npc-d\"]:has-text(\"旭日药师\")", timeout=3000)
+        while (person := page.locator("div[class=\"npc-d\"]:has-text(\"旭日药师\")")).count() == 1:
             person.click()
             page.wait_for_timeout(timeout=500)
-            if page.locator("div[class=\"ant-drawer ant-drawer-bottom ant-drawer-open\"]").count() == 1:
+            if page.locator("div[class=\"n-card__content\"] >> div[role=\"separator\"]").count() == 1:
                 page.locator("text=接取[采药]任务").click()
                 page.wait_for_timeout(timeout=500)
                 if page.locator("text=领取上限").count() == 1:
+                    #
                     DynLog.record_log("今日任务已做完")
                     return None
                 page.wait_for_timeout(timeout=500)
@@ -46,16 +47,19 @@ class YaoLing:
         return True
 
     @classmethod
-    def mission_do(cls, page: Page, fight_config: dict, i):
+    def mission_do(cls, page: Page, i):
         mission = page.locator("text=-寻找药灵")
         mission.hover()
-        page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
-        mission_detail = page.locator("span[class=\"task-brief\"]:has-text(\"地区击败\")")
-        pattern_mission = re.search(".+【(.+)】.*地区击败(.+)", mission_detail.inner_text())
+        page.wait_for_selector("text=地区击败", timeout=2000)
+        task_info = page.locator("div[class=\"task-info\"]")
+        pattern_mission = re.search(".+【(.+)】.*地区击败(.+)", task_info.inner_text())
         mission_monster = pattern_mission.group(2).strip()
 
         mission.click()
         DynLog.record_log("飞过去")
+        page.wait_for_timeout(timeout=500)
+        page.hover("text=累计奖励")
+        page.wait_for_timeout(timeout=500)
         page.click("div[id=\"tab-scene-tab\"]")
         page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
@@ -66,21 +70,20 @@ class YaoLing:
             monster_id = monster_list.index(mission_monster)
             battle_icon[monster_id].click()
 
-            # TODO(kevin): 更智能的判断结束
-            while True:
+            try:
+                page.wait_for_selector("text=完成任务", timeout=30000)
+            except TimeoutError:
+                continue
+            else:
                 page.click("div[id=\"tab-scene-tab\"]")
                 page.wait_for_timeout(timeout=500)
-                if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
-                    break
-                else:
-                    continue
 
+            battle_div = page.locator(f"div[class=\"n-scrollbar-content\"]:below(:has-text(\"附近兽群\")):right-of(:has-text(\"附近队伍\"))")
+            if battle_div.locator(f"text={mission_monster}").count() != 0:
+                continue
             update_display_info(page, cls.info_deque)
-            page.locator("i[class=\"el-icon-refresh\"]").click()
-            page.wait_for_timeout(timeout=500)
-            if mission.count() == 0:
-                DynLog.record_log(f"完成今日第{i + 1}次药灵任务")
-                break
+            DynLog.record_log(f"完成今日第{i + 1}次药灵任务")
+            break
 
     @classmethod
     def run(cls, page: Page, user_config: dict):
@@ -100,9 +103,9 @@ class YaoLing:
                     continue
                 elif success is None:
                     break
-                cls.mission_do(page, user_config.get('fight'), i)
+                cls.mission_do(page, i)
             else:
-                cls.mission_do(page, user_config.get('fight'), i)
+                cls.mission_do(page, i)
         DynLog.record_log("任务完成，请手动退出")
 
 
@@ -235,7 +238,6 @@ class XiangYao:
 
 class XunBao:
     start_city = "阳城"
-    auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
 
     @classmethod
@@ -243,11 +245,11 @@ class XunBao:
         CityMap.move_to_map(page, cls.start_city)
 
         DynLog.record_log("接取寻宝任务")
-        page.wait_for_selector("button:has-text(\"盗极生\")", timeout=3000)
-        while (person := page.locator("button:has-text(\"盗极生\")")).count() == 1:
+        page.wait_for_selector("div[class=\"npc-d\"]:has-text(\"盗极生\")", timeout=3000)
+        while (person := page.locator("div[class=\"npc-d\"]:has-text(\"盗极生\")")).count() == 1:
             person.click()
             page.wait_for_timeout(timeout=500)
-            if page.locator("div[class=\"ant-drawer ant-drawer-bottom ant-drawer-open\"]").count() == 1:
+            if page.locator("div[class=\"n-card__content\"] >> div[role=\"separator\"]").count() == 1:
                 page.locator("text=接取[寻宝图]任务").click()
                 page.wait_for_timeout(timeout=500)
                 if page.locator("text=领取上限").count() == 1:
@@ -268,16 +270,19 @@ class XunBao:
         return True
 
     @classmethod
-    def mission_do(cls, page: Page, fight_config: dict, i):
+    def mission_do(cls, page: Page, i):
         mission = page.locator("text=-寻宝")
         mission.hover()
-        page.wait_for_selector("span[class=\"task-brief\"]:has-text(\"地区击败\")", timeout=2000)
-        mission_detail = page.locator("span[class=\"task-brief\"]:has-text(\"地区击败\")")
-        pattern_mission = re.search(".+【(.+)】.*地区击败(.+)", mission_detail.inner_text())
+        page.wait_for_selector("text=地区击败", timeout=2000)
+        task_info = page.locator("div[class=\"task-info\"]")
+        pattern_mission = re.search(".+【(.+)】.*地区击败(.+)", task_info.inner_text())
         mission_monster = pattern_mission.group(2).strip()
 
         mission.click()
         DynLog.record_log("飞过去")
+        page.wait_for_timeout(timeout=500)
+        page.hover("text=累计奖励")
+        page.wait_for_timeout(timeout=500)
         page.click("div[id=\"tab-scene-tab\"]")
         page.wait_for_timeout(timeout=500)
         page.wait_for_selector(f"text={mission_monster}", timeout=3000)
@@ -288,26 +293,19 @@ class XunBao:
             monster_id = monster_list.index(mission_monster)
             battle_icon[monster_id].click()
 
-            # 自动战斗
-            if not cls.auto_fight:
-                auto_fight(page, fight_config, False)
-                cls.auto_fight = True
-
-            # TODO(kevin): 更智能的判断结束
-            while True:
+            try:
+                page.wait_for_selector("text=完成任务", timeout=30000)
+            except TimeoutError:
+                continue
+            else:
                 page.click("div[id=\"tab-scene-tab\"]")
                 page.wait_for_timeout(timeout=500)
-                if page.locator(f"span[class=\"scene-name\"]:has-text(\"{mission_monster}\")").count() == 0:
-                    break
-                else:
-                    continue
 
+            battle_div = page.locator(f"div[class=\"n-scrollbar-content\"]:below(:has-text(\"附近兽群\")):right-of(:has-text(\"附近队伍\"))")
+            if battle_div.locator(f"text={mission_monster}").count() != 0:
+                continue
             update_display_info(page, cls.info_deque)
-            page.locator("i[class=\"el-icon-refresh\"]").click()
-            page.wait_for_timeout(timeout=500)
-            if mission.count() == 0:
-                DynLog.record_log(f"完成今日第{i + 1}次寻宝任务")
-                break
+            DynLog.record_log(f"完成今日第{i + 1}次寻宝任务")
 
     @classmethod
     def run(cls, page: Page, user_config: dict):
@@ -327,7 +325,7 @@ class XunBao:
                     continue
                 elif success is None:
                     break
-                cls.mission_do(page, user_config.get('fight'), i)
+                cls.mission_do(page,  i)
             else:
-                cls.mission_do(page, user_config.get('fight'), i)
+                cls.mission_do(page, i)
         DynLog.record_log("任务完成，请手动退出")
