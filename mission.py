@@ -111,7 +111,6 @@ class YaoLing:
 
 class XiangYao:
     start_city = "林中栈道"
-    auto_fight = False
     info_deque = defaultdict(partial(deque, maxlen=128))
 
     @classmethod
@@ -119,19 +118,11 @@ class XiangYao:
         CityMap.move_to_map(page, cls.start_city)
 
         DynLog.record_log("接取降妖任务")
-        page.wait_for_selector("button:has-text(\"凌中天\")", timeout=3000)
-        page.click("div[id=\"tab-scene-tab\"]")
-        page.wait_for_timeout(timeout=500)
-
-        if page.locator("a:has-text(\"X\")").count() == 0:
-            page.click("text=需要密令")
-            page.wait_for_timeout(timeout=300)
-            page.click("button:has-text(\"创建队伍\")")
-            page.wait_for_selector("a:has-text(\"X\")", timeout=1000)
-        while (person := page.locator("button:has-text(\"凌中天\")")).count() == 1:
+        page.wait_for_selector("div[class=\"npc-d\"]:has-text(\"凌中天\")", timeout=3000)
+        while (person := page.locator("div[class=\"npc-d\"]:has-text(\"凌中天\")")).count() == 1:
             person.click()
             page.wait_for_timeout(timeout=500)
-            if page.locator("div[class=\"ant-drawer ant-drawer-bottom ant-drawer-open\"]").count() == 1:
+            if page.locator("div[class=\"n-card__content\"] >> div[role=\"separator\"]").count() == 1:
                 page.locator("text=接取[降妖]任务").click()
                 page.wait_for_timeout(timeout=500)
                 if page.locator("text=领取上限").count() == 1:
@@ -141,8 +132,6 @@ class XiangYao:
             else:
                 DynLog.record_log("任务对话框没弹出来", error=True)
                 continue
-            page.locator("i[class=\"el-icon-refresh\"]").click()
-            page.wait_for_timeout(timeout=500)
             if page.locator("text=-降妖").count() == 1:
                 DynLog.record_log("接到任务")
                 break
@@ -306,6 +295,7 @@ class XunBao:
                 continue
             update_display_info(page, cls.info_deque)
             DynLog.record_log(f"完成今日第{i + 1}次寻宝任务")
+            break
 
     @classmethod
     def run(cls, page: Page, user_config: dict):
@@ -317,7 +307,7 @@ class XunBao:
             DynLog.record_log("开始做寻宝任务")
             update_display_info(page, cls.info_deque)
             page.click("div[id=\"tab-scene-tab\"]")
-            page.wait_for_timeout(timeout=500)
+            page.wait_for_timeout(timeout=1000)
 
             if page.locator("text=-寻宝").count() == 0:
                 success = cls.mission_take(page)
