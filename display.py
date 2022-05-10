@@ -78,8 +78,8 @@ class UserMainInfo:
         for _ in range(4):
             message.add_column(justify="right")
             message.add_column(justify="left")
-        message.add_row("胜利:", str(self.values.get("fight_info", {}).get("胜利", "")),
-                        "败北:", str(self.values.get("fight_info", {}).get("败北", "")),
+        message.add_row("胜利:", str(self.values.get("fight_info", {}).get("胜", "")),
+                        "败北:", str(self.values.get("fight_info", {}).get("败", "")),
                         "修为:", str(self.values.get("fight_info", {}).get("修为", "")),
                         "队伍人数:", str(self.values.get("team_info", {}).get("num", "")))
         return Panel(message, title="战斗信息")
