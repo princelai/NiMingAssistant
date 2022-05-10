@@ -51,7 +51,7 @@ def get_user_info(page: Page) -> dict:
 
 def get_fight_result(page: Page):
     page.click("text=累计奖励")
-    page.wait_for_selector("text=败北", timeout=2000)
+    page.wait_for_selector("text=败:", timeout=2000)
     log_fight_frame = page.locator("span[class=\"bat-log-p\"]")
     fight_stats = {(tmp := log_fight_frame.nth(i).inner_text().split(":"))[0]: int(tmp[1]) for i in range(log_fight_frame.count())}
     log_reward_frame = page.locator("span[class=\"bat-log-p goods\"]")
