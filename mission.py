@@ -29,7 +29,6 @@ class YaoLing:
                 page.locator("text=接取[采药]任务").click()
                 page.wait_for_timeout(timeout=500)
                 if page.locator("text=领取上限").count() == 1:
-                    #
                     DynLog.record_log("今日任务已做完")
                     return None
                 page.wait_for_timeout(timeout=500)

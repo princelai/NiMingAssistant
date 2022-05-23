@@ -27,6 +27,7 @@ class CityMap:
             DynLog.record_log(f"寻路去往{target_map}")
             walk_path = nx.shortest_path(cls.g, curr_map, target_map)[1:]
             for p in walk_path:
+                # TODO(kevin):这里有问题
                 page.click(f"text=/{p}$/i")
                 page.wait_for_selector(f"text=当前地图:{p}", timeout=5000)
                 page.wait_for_timeout(timeout=1000)

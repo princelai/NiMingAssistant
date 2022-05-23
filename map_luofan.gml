@@ -151,6 +151,14 @@ graph [
     id 37
     label "&#38504;&#30495;&#31105;&#22320;"
   ]
+  node [
+    id 38
+    label "&#22235;&#23395;&#23665;"
+  ]
+  node [
+    id 39
+    label "&#38738;&#20901;&#27743;"
+  ]
   edge [
     source 0
     target 1
@@ -206,6 +214,10 @@ graph [
   edge [
     source 10
     target 11
+  ]
+  edge [
+    source 11
+    target 39
   ]
   edge [
     source 12
@@ -314,5 +326,9 @@ graph [
   edge [
     source 36
     target 37
+  ]
+  edge [
+    source 37
+    target 38
   ]
 ]

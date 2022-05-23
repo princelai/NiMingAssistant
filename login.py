@@ -79,7 +79,7 @@ def login(page: Page, conf: dict):
 
             with page.expect_navigation(url="https://nimingxx.com/home/index", timeout=5000):
                 page.click("button[type=\"button\"]")
-            page.wait_for_selector("text=当前任务", timeout=4000)
+            page.wait_for_selector("text=当前活动", timeout=4000)
             break
         except Exception:
             DynLog.record_log("连接失败", error=True)
